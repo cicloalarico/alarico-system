@@ -35,8 +35,19 @@ export function BarChart({
   customTooltip,
   className
 }: BarChartProps) {
+  // Create a chart config object with colors for each category
+  const chartConfig = categories.reduce((acc, category, i) => {
+    return {
+      ...acc,
+      [category]: {
+        label: category,
+        color: colors[i % colors.length],
+      },
+    }
+  }, {})
+
   return (
-    <ChartContainer className={cn(className)}>
+    <ChartContainer className={cn(className)} config={chartConfig}>
       <ResponsiveContainer width="100%" height="100%">
         <RechartsBarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
           {showGrid && <CartesianGrid strokeDasharray="3 3" vertical={false} />}
@@ -109,8 +120,19 @@ export function LineChart({
   yAxisWidth = 56,
   className
 }: LineChartProps) {
+  // Create a chart config object with colors for each category
+  const chartConfig = categories.reduce((acc, category, i) => {
+    return {
+      ...acc,
+      [category]: {
+        label: category,
+        color: colors[i % colors.length],
+      },
+    }
+  }, {})
+
   return (
-    <ChartContainer className={cn(className)}>
+    <ChartContainer className={cn(className)} config={chartConfig}>
       <ResponsiveContainer width="100%" height="100%">
         <RechartsLineChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
           {showGrid && <CartesianGrid strokeDasharray="3 3" vertical={false} />}
@@ -175,8 +197,20 @@ export function PieChart({
 }: PieChartProps) {
   const categoryValues = categories[0]; // For pie charts, we typically use a single category
   
+  // Create a chart config for pie segments
+  const chartConfig = data.reduce((acc, entry, i) => {
+    const name = entry[index];
+    return {
+      ...acc,
+      [name]: {
+        label: name,
+        color: colors[i % colors.length],
+      },
+    }
+  }, {})
+  
   return (
-    <ChartContainer className={cn(className)}>
+    <ChartContainer className={cn(className)} config={chartConfig}>
       <ResponsiveContainer width="100%" height="100%">
         <RechartPieChart margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
           <Pie
