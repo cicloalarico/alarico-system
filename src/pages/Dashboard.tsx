@@ -78,7 +78,7 @@ const Dashboard = () => {
         <Card>
           <CardContent className="flex items-center p-6">
             <div className="bg-shop-secondary/10 p-3 rounded-full mr-4">
-              <Tool size={24} className="text-shop-secondary" />
+              <Wrench size={24} className="text-shop-secondary" />
             </div>
             <div>
               <p className="text-sm font-medium text-gray-500">Serviços Ativos</p>
