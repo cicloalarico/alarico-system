@@ -1,3 +1,4 @@
+
 export type PriorityType = 'Baixa' | 'Normal' | 'Alta' | 'Urgente';
 export type ServiceStatusType = 'Aberta' | 'Em andamento' | 'Aguardando peças' | 'Concluída' | 'Entregue' | 'Cancelada' | 'Aguardando';
 
@@ -63,6 +64,8 @@ export interface Product {
   brand: string;
   costPrice: number;
   sellPrice: number;
+  minSellPrice: number;
+  profitMargin: number;
   stock: number;
   minStock: number;
   supplier: string;
