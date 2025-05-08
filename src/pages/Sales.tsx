@@ -51,7 +51,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
-import ptBR from "date-fns/locale/pt-BR";
+import { ptBR } from "date-fns/locale/pt-BR";
 
 // Mock sales data
 const initialSales = [
@@ -864,53 +864,3 @@ const Sales = () => {
               <div className="border-t pt-4">
                 <p className="text-sm font-medium text-gray-500 mb-2">Itens da Venda</p>
                 <div className="border rounded-md">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Produto</TableHead>
-                        <TableHead className="text-center">Qtd</TableHead>
-                        <TableHead className="text-right">Preço</TableHead>
-                        <TableHead className="text-right">Subtotal</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {selectedSale.items.map((item: any, index: number) => (
-                        <TableRow key={index}>
-                          <TableCell>{item.name}</TableCell>
-                          <TableCell className="text-center">{item.quantity}</TableCell>
-                          <TableCell className="text-right">
-                            R$ {item.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                          </TableCell>
-                          <TableCell className="text-right font-medium">
-                            R$ {item.subtotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-              
-              <div className="pt-2 flex justify-between border-t">
-                <p className="font-medium">Total</p>
-                <p className="font-bold">
-                  R$ {selectedSale.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </p>
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsViewDialogOpen(false)}>
-              Fechar
-            </Button>
-            <Button>
-              <Printer className="mr-2 h-4 w-4" /> Imprimir
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-};
-
-export default Sales;
