@@ -126,10 +126,22 @@ export const serviceOptions = [
 ];
 
 // Define o tipo para produtos na ordem de serviço
-export interface ServiceOrderProduct extends Product {
-  quantity: number;
+// Fixed - Using Pick and adding the necessary properties instead of extending
+export interface ServiceOrderProduct {
+  id: number;
+  name: string;
   price: number;
+  quantity: number;
   stock?: number;
+  subtotal?: number;
+  code?: string;
+  category?: string;
+  brand?: string;
+  costPrice?: number;
+  sellPrice?: number;
+  minStock?: number;
+  supplier?: string;
+  location?: string;
 }
 
 // Sample product options

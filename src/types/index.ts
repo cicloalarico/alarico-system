@@ -84,3 +84,9 @@ export interface StockMovement {
   document: string;
   user: string;
 }
+
+// Add DateRange type for the Reports page
+export interface DateRange {
+  from: Date;
+  to: Date | undefined;
+}

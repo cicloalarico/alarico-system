@@ -27,19 +27,13 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { X } from "lucide-react";
 import { ServiceItem, ProductItem } from "@/types";
+import { ServiceOrderProduct } from "@/data/serviceOrdersData";
 
 // Tipos para o formulário de ordem de serviço
 export interface Service extends ServiceItem {}
 
 // Tipo de produto para ordem de serviço
-export interface Product {
-  id: number;
-  name: string;
-  quantity: number;
-  price: number;
-  stock?: number;
-  subtotal?: number;
-}
+export interface Product extends ServiceOrderProduct {}
 
 interface ServiceOrderFormProps {
   isOpen: boolean;
