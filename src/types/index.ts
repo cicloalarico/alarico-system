@@ -4,7 +4,7 @@ export interface Product {
   name: string;
   price: number;
   stock: number;
-  quantity?: number; // For cart/order contexts
+  quantity: number; // Changed from optional to required to match ServiceOrderForm.tsx
 }
 
 export interface Customer {
@@ -44,5 +44,5 @@ export interface ServiceOrder {
 
 export interface DateRange {
   from: Date;
-  to?: Date | undefined;
+  to: Date; // Changed from optional to required to match usage
 }

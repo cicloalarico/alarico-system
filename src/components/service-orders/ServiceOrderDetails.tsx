@@ -116,7 +116,7 @@ const ServiceOrderDetails: React.FC<ServiceOrderDetailsProps> = ({
               </div>
               <div>
                 <h3 className="text-sm font-medium text-gray-500 flex items-center">
-                  <Tool className="h-4 w-4 mr-1" /> Técnico
+                  <Wrench className="h-4 w-4 mr-1" /> Técnico
                 </h3>
                 <p>{order.technician || "-"}</p>
               </div>

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -484,7 +483,7 @@ const Calendar = () => {
                               )}
                               {event.technicianId > 0 && (
                                 <div className="flex items-center gap-1">
-                                  <Tool size={14} />
+                                  <Wrench size={14} />
                                   <span>
                                     {technicians.find(t => t.id === event.technicianId)?.name}
                                   </span>

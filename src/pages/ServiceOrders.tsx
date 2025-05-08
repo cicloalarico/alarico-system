@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -152,7 +151,7 @@ const serviceOptions = [
   { id: 8, name: "Instalação grupo completo", price: 250.00 },
 ];
 
-// Sample product options
+// Sample product options - Make sure they match the Product interface
 const productOptions: Product[] = [
   { id: 1, name: "Pneu MTB 29\"", price: 129.90, stock: 10, quantity: 0 },
   { id: 2, name: "Câmara aro 29", price: 29.90, stock: 15, quantity: 0 },
