@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +29,9 @@ import ServiceOrderDetails from "@/components/service-orders/ServiceOrderDetails
 import { ServiceStatusType } from "@/components/service-orders/ServiceStatus";
 import { Product, ServiceOrder } from "@/types";
 
+// Define priority type to match what's in ServiceOrder
+type PriorityType = "Baixa" | "Normal" | "Alta" | "Urgente";
+
 // Mock data for service orders
 const initialServiceOrders = [
   {
@@ -36,7 +40,7 @@ const initialServiceOrders = [
     bikeModel: "Mountain Bike Trek X-Caliber 8",
     issueDescription: "Freios fazendo barulho e sem força",
     status: "Em andamento" as ServiceStatusType,
-    priority: "Normal" as "Normal",
+    priority: "Normal" as PriorityType,
     createdAt: "2024-05-01",
     scheduledFor: "2024-05-05",
     completedAt: null,
@@ -215,16 +219,13 @@ const ServiceOrders = () => {
   const handleCreateServiceOrder = (data: any) => {
     const orderCount = serviceOrders.length;
     
-    // Define the type for priority explicitly
-    const priorityValues = ["Baixa", "Normal", "Alta", "Urgente"] as const;
-    type PriorityType = typeof priorityValues[number];
+    // Ensure the priority is valid by checking against allowed values
+    let priority: PriorityType = "Normal"; // Default to Normal
     
-    // Make sure the priority is one of the allowed values
-    let priority: PriorityType;
-    if (priorityValues.includes(data.priority as any)) {
+    // Check if data.priority is one of the valid options
+    if (data.priority === "Baixa" || data.priority === "Normal" || 
+        data.priority === "Alta" || data.priority === "Urgente") {
       priority = data.priority as PriorityType;
-    } else {
-      priority = "Normal";
     }
     
     const newOrder: ServiceOrder = {
@@ -233,7 +234,7 @@ const ServiceOrders = () => {
       bikeModel: data.bikeModel,
       issueDescription: data.issueDescription,
       status: "Aberta" as ServiceStatusType,
-      priority: priority,
+      priority: priority, // Use our validated priority value
       createdAt: new Date().toISOString().split("T")[0],
       scheduledFor: data.scheduledFor,
       completedAt: null,
