@@ -1,150 +1,150 @@
 
-import React from "react";
-import { NavLink } from "react-router-dom";
-import { 
-  Home, 
-  Users, 
-  Package, 
-  ShoppingCart, 
-  Wrench, 
-  DollarSign, 
-  BarChart3, 
-  Settings,
-  Tag,
-  Calendar
-} from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
+
 import { cn } from "@/lib/utils";
+import {
+  BarChart,
+  Users,
+  Package,
+  ShoppingCart,
+  Wrench,
+  CreditCard,
+  Receipt,
+  Calendar as CalendarIcon,
+  BarChart3,
+  Settings,
+  FileText,
+} from "lucide-react";
+import useMobile from "@/hooks/use-mobile";
 
-interface SidebarProps {
-  isOpen: boolean;
-}
+const Sidebar = ({ expanded }: { expanded: boolean }) => {
+  const { pathname } = useLocation();
+  const isMobile = useMobile();
 
-// Define the navigation items
-const navigation = [
-  { name: "Dashboard", to: "/", icon: Home },
-  { 
-    name: "Cadastros", 
-    to: "#", 
-    icon: Users,
-    submenu: [
-      { name: "Usuários", to: "/users" },
-      { name: "Clientes", to: "/customers" }
-    ] 
-  },
-  { name: "Estoque", to: "/inventory", icon: Package },
-  { name: "Produtos", to: "/products", icon: Tag },
-  { name: "Vendas", to: "/sales", icon: ShoppingCart },
-  { name: "Ordem de Serviço", to: "/services", icon: Wrench },
-  { name: "Financeiro", to: "/financial", icon: DollarSign },
-  { name: "Relatórios", to: "/reports", icon: BarChart3 },
-  { name: "Agenda", to: "/calendar", icon: Calendar },
-  { name: "Configurações", to: "/settings", icon: Settings }
-];
+  // Define the navigation items
+  const navItems = [
+    {
+      title: "Dashboard",
+      href: "/",
+      icon: BarChart,
+    },
+    {
+      title: "Clientes",
+      href: "/customers",
+      icon: Users,
+    },
+    {
+      title: "Produtos",
+      href: "/products",
+      icon: Package,
+    },
+    {
+      title: "Estoque",
+      href: "/inventory",
+      icon: ShoppingCart,
+    },
+    {
+      title: "Ordens de Serviço",
+      href: "/services",
+      icon: Wrench,
+    },
+    {
+      title: "Vendas",
+      href: "/sales",
+      icon: ShoppingCart,
+    },
+    {
+      title: "Financeiro",
+      href: "/financial",
+      icon: CreditCard,
+    },
+    {
+      title: "Contas a Pagar",
+      href: "/bills",
+      icon: Receipt,
+    },
+    {
+      title: "Agenda",
+      href: "/calendar",
+      icon: CalendarIcon,
+    },
+    {
+      title: "Relatórios",
+      href: "/reports",
+      icon: BarChart3,
+    },
+    {
+      title: "Usuários",
+      href: "/users",
+      icon: Users,
+    },
+    {
+      title: "Configurações",
+      href: "/settings",
+      icon: Settings,
+    },
+  ];
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
-  const [openSubmenu, setOpenSubmenu] = React.useState<string | null>(null);
-
-  const toggleSubmenu = (name: string) => {
-    setOpenSubmenu(openSubmenu === name ? null : name);
-  };
+  if (isMobile) {
+    return null;
+  }
 
   return (
-    <aside 
+    <div
       className={cn(
-        "bg-sidebar text-sidebar-foreground h-screen overflow-y-auto transition-all duration-300 ease-in-out",
-        isOpen ? "w-64" : "w-0 md:w-20"
+        "hidden md:flex flex-col border-r transition-all duration-300",
+        expanded ? "w-56" : "w-16"
       )}
     >
-      <div className="p-4 flex items-center justify-center">
-        <h2 className={cn(
-          "text-white font-bold transition-all duration-300",
-          isOpen ? "text-xl" : "text-xs md:text-sm"
-        )}>
-          {isOpen ? "Ciclo Alarico" : "CA"}
-        </h2>
+      <div className="p-4 h-16 flex items-center border-b">
+        <h1
+          className={cn(
+            "font-bold overflow-hidden transition-all duration-300",
+            expanded ? "w-56 opacity-100" : "w-0 opacity-0"
+          )}
+        >
+          Ciclo Alarico
+        </h1>
+        <img
+          src="/favicon.ico"
+          alt="Logo"
+          className={cn(
+            "h-8 w-8 transition-all duration-300",
+            expanded ? "opacity-0 w-0" : "opacity-100"
+          )}
+        />
       </div>
 
-      <nav className="mt-6">
-        <ul className="space-y-1 px-2">
-          {navigation.map((item) => (
-            <li key={item.name}>
-              {item.submenu ? (
-                <div className="mb-1">
-                  <button
-                    onClick={() => toggleSubmenu(item.name)}
-                    className={cn(
-                      "w-full flex items-center px-4 py-3 text-sidebar-foreground rounded-md hover:bg-sidebar-accent transition-colors",
-                      openSubmenu === item.name && "bg-sidebar-accent"
-                    )}
-                  >
-                    <item.icon className="h-5 w-5 mr-3" />
-                    {isOpen && <span>{item.name}</span>}
-                    {isOpen && (
-                      <svg
-                        className={`ml-auto h-4 w-4 transform ${
-                          openSubmenu === item.name ? "rotate-180" : ""
-                        }`}
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    )}
-                  </button>
-                  {isOpen && openSubmenu === item.name && (
-                    <ul className="pl-10 mt-1 space-y-1">
-                      {item.submenu.map((subitem) => (
-                        <li key={subitem.name}>
-                          <NavLink
-                            to={subitem.to}
-                            className={({ isActive }) =>
-                              cn(
-                                "block py-2 px-4 rounded-md hover:bg-sidebar-accent",
-                                isActive && "bg-sidebar-accent font-medium"
-                              )
-                            }
-                          >
-                            {subitem.name}
-                          </NavLink>
-                        </li>
-                      ))}
-                    </ul>
+      <div className="py-4 flex-1">
+        <nav className="px-2 space-y-1">
+          {navItems.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                to={item.href}
+                className={cn(
+                  "flex items-center py-2 px-3 rounded-lg text-sm font-medium hover:bg-slate-100",
+                  isActive
+                    ? "bg-slate-100 text-slate-900"
+                    : "text-slate-600 hover:text-slate-900"
+                )}
+              >
+                <item.icon className={cn("h-5 w-5")} />
+                <span
+                  className={cn(
+                    "ml-3 whitespace-nowrap transition-all duration-300",
+                    expanded ? "opacity-100" : "w-0 opacity-0"
                   )}
-                </div>
-              ) : (
-                <NavLink
-                  to={item.to}
-                  className={({ isActive }) =>
-                    cn(
-                      "flex items-center px-4 py-3 text-sidebar-foreground rounded-md hover:bg-sidebar-accent transition-colors",
-                      isActive && "bg-sidebar-accent font-medium"
-                    )
-                  }
                 >
-                  <item.icon className="h-5 w-5 mr-3" />
-                  {isOpen && <span>{item.name}</span>}
-                </NavLink>
-              )}
-            </li>
-          ))}
-        </ul>
-      </nav>
-
-      <div className="absolute bottom-0 w-full p-4 bg-sidebar-accent">
-        <div className={cn(
-          "text-xs text-sidebar-foreground/70",
-          !isOpen && "text-center"
-        )}>
-          {isOpen ? "© 2024 Ciclo Alarico" : "© 2024"}
-        </div>
+                  {item.title}
+                </span>
+              </Link>
+            );
+          })}
+        </nav>
       </div>
-    </aside>
+    </div>
   );
 };
 

@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -23,6 +22,7 @@ import Users from "./pages/Users";
 import Inventory from "./pages/Inventory";
 import Sales from "./pages/Sales";
 import Calendar from "./pages/Calendar";
+import Bills from "./pages/Bills";
 
 const queryClient = new QueryClient();
 
@@ -94,6 +94,7 @@ const App = () => {
                 <Route path="/sales" element={<Sales />} />
                 <Route path="/services" element={<ServiceOrders />} />
                 <Route path="/financial" element={<Financial />} />
+                <Route path="/bills" element={<Bills />} />
                 <Route path="/reports" element={<Reports />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/calendar" element={<Calendar />} />
