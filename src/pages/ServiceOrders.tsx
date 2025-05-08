@@ -27,6 +27,7 @@ import ServiceOrderCard from "@/components/service-orders/ServiceOrderCard";
 import ServiceOrderForm from "@/components/service-orders/ServiceOrderForm";
 import ServiceOrderDetails from "@/components/service-orders/ServiceOrderDetails";
 import { ServiceStatusType } from "@/components/service-orders/ServiceStatus";
+import { Product } from "@/types";
 
 // Mock data for service orders
 const initialServiceOrders = [
@@ -36,7 +37,7 @@ const initialServiceOrders = [
     bikeModel: "Mountain Bike Trek X-Caliber 8",
     issueDescription: "Freios fazendo barulho e sem força",
     status: "Em andamento" as ServiceStatusType,
-    priority: "Normal",
+    priority: "Normal" as "Normal",
     createdAt: "2024-05-01",
     scheduledFor: "2024-05-05",
     completedAt: null,
@@ -152,12 +153,12 @@ const serviceOptions = [
 ];
 
 // Sample product options
-const productOptions = [
-  { id: 1, name: "Pneu MTB 29\"", price: 129.90, stock: 10 },
-  { id: 2, name: "Câmara aro 29", price: 29.90, stock: 15 },
-  { id: 3, name: "Pastilha de freio Shimano", price: 89.90, stock: 8 },
-  { id: 4, name: "Óleo suspensão 10w", price: 120.00, stock: 5 },
-  { id: 5, name: "Lubrificante de corrente", price: 39.90, stock: 20 },
+const productOptions: Product[] = [
+  { id: 1, name: "Pneu MTB 29\"", price: 129.90, stock: 10, quantity: 0 },
+  { id: 2, name: "Câmara aro 29", price: 29.90, stock: 15, quantity: 0 },
+  { id: 3, name: "Pastilha de freio Shimano", price: 89.90, stock: 8, quantity: 0 },
+  { id: 4, name: "Óleo suspensão 10w", price: 120.00, stock: 5, quantity: 0 },
+  { id: 5, name: "Lubrificante de corrente", price: 39.90, stock: 20, quantity: 0 },
 ];
 
 // Sample customers
@@ -220,7 +221,7 @@ const ServiceOrders = () => {
       bikeModel: data.bikeModel,
       issueDescription: data.issueDescription,
       status: "Aberta" as ServiceStatusType,
-      priority: data.priority,
+      priority: data.priority as "Baixa" | "Normal" | "Alta" | "Urgente",
       createdAt: new Date().toISOString().split("T")[0],
       scheduledFor: data.scheduledFor,
       completedAt: null,

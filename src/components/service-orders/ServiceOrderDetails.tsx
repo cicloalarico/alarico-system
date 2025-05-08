@@ -26,7 +26,7 @@ import {
   CheckCircle, 
   XCircle, 
   Clock,
-  Tool
+  Wrench
 } from "lucide-react";
 import { ServiceStatusType } from './ServiceStatus';
 import ServiceStatus from './ServiceStatus';
