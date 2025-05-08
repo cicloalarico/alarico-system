@@ -59,7 +59,7 @@ const initialServiceOrders = [
     bikeModel: "Caloi Elite Carbon",
     issueDescription: "Revisão geral para viagem",
     status: "Concluída" as ServiceStatusType,
-    priority: "Alta",
+    priority: "Alta" as PriorityType,
     createdAt: "2024-05-02",
     scheduledFor: "2024-05-04",
     completedAt: "2024-05-04",
@@ -81,7 +81,7 @@ const initialServiceOrders = [
     bikeModel: "Speed Specialized Tarmac",
     issueDescription: "Troca de grupo de câmbio",
     status: "Aguardando peças" as ServiceStatusType,
-    priority: "Normal",
+    priority: "Normal" as PriorityType,
     createdAt: "2024-05-03",
     scheduledFor: "2024-05-10",
     completedAt: null,
@@ -101,7 +101,7 @@ const initialServiceOrders = [
     bikeModel: "Cannondale Trail 5",
     issueDescription: "Barulho estranho ao pedalar",
     status: "Aberta" as ServiceStatusType,
-    priority: "Normal",
+    priority: "Normal" as PriorityType,
     createdAt: "2024-05-06",
     scheduledFor: "2024-05-08",
     completedAt: null,
@@ -117,7 +117,7 @@ const initialServiceOrders = [
     bikeModel: "BMX Mongoose Legion",
     issueDescription: "Troca de pneu e câmara",
     status: "Em andamento" as ServiceStatusType,
-    priority: "Baixa",
+    priority: "Baixa" as PriorityType,
     createdAt: "2024-05-05",
     scheduledFor: "2024-05-07",
     completedAt: null,
@@ -255,6 +255,7 @@ const ServiceOrders = () => {
   const handleUpdateStatus = (orderId: string, newStatus: ServiceStatusType) => {
     const updatedOrders = serviceOrders.map(order => {
       if (order.id === orderId) {
+        // Create a new object to avoid mutating the original
         const updatedOrder = { ...order, status: newStatus };
         if (newStatus === "Concluída" || newStatus === "Entregue") {
           updatedOrder.completedAt = new Date().toISOString().split("T")[0];
