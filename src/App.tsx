@@ -22,6 +22,7 @@ import Reports from "./pages/Reports";
 import Users from "./pages/Users";
 import Inventory from "./pages/Inventory";
 import Sales from "./pages/Sales";
+import Calendar from "./pages/Calendar";
 
 const queryClient = new QueryClient();
 
@@ -95,6 +96,7 @@ const App = () => {
                 <Route path="/financial" element={<Financial />} />
                 <Route path="/reports" element={<Reports />} />
                 <Route path="/settings" element={<Settings />} />
+                <Route path="/calendar" element={<Calendar />} />
                 {/* Add more routes as needed */}
               </Route>
             ) : (
