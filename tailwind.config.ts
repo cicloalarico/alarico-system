@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,15 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Bicycle shop custom colors
+				shop: {
+					primary: '#2e7d32', // Forest green
+					secondary: '#1565c0', // Deep blue
+					accent: '#43a047', // Vibrant green
+					light: '#e8f5e9', // Light green background
+					dark: '#1b5e20', // Dark green
+					gray: '#eceff1', // Light gray background
 				}
 			},
 			borderRadius: {
