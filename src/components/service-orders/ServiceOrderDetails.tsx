@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import {
@@ -28,38 +27,13 @@ import {
   Clock,
   Wrench
 } from "lucide-react";
-import { ServiceStatusType } from './ServiceStatus';
 import ServiceStatus from './ServiceStatus';
+import { ServiceOrder, ServiceStatusType } from '@/types';
 
 interface ServiceOrderDetailsProps {
   isOpen: boolean;
   onClose: () => void;
-  order: {
-    id: string;
-    customer: string;
-    bikeModel: string;
-    issueDescription: string;
-    status: ServiceStatusType;
-    priority: string;
-    createdAt: string;
-    scheduledFor: string;
-    completedAt: string | null;
-    technician: string | null;
-    services: Array<{
-      id: number;
-      name: string;
-      price: number;
-    }>;
-    products: Array<{
-      id: number;
-      name: string;
-      quantity: number;
-      price: number;
-      subtotal: number;
-    }>;
-    totalPrice: number;
-    notes: string;
-  } | null;
+  order: ServiceOrder | null;
   onUpdateStatus?: (orderId: string, status: ServiceStatusType) => void;
 }
 

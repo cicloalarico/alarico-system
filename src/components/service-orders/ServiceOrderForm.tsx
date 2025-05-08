@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,21 +26,19 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { X } from "lucide-react";
+import { ServiceItem, ProductItem } from "@/types";
 
-// Tipos de serviço para ordem de serviço
-export interface Service {
-  id: number;
-  name: string;
-  price: number;
-}
+// Tipos para o formulário de ordem de serviço
+export interface Service extends ServiceItem {}
 
-// Produto para ordem de serviço
+// Tipo de produto para ordem de serviço
 export interface Product {
   id: number;
   name: string;
   quantity: number;
   price: number;
   stock?: number;
+  subtotal?: number;
 }
 
 interface ServiceOrderFormProps {
@@ -74,8 +71,8 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
     technicianId: "",
     scheduledFor: new Date().toISOString().split("T")[0],
     notes: "",
-    services: [] as Array<Service & { id: number }>,
-    products: [] as Array<Product & { id: number, subtotal: number }>,
+    services: [] as Service[],
+    products: [] as (Product & { subtotal: number })[],
   });
   
   // Estado para campos temporários
@@ -84,12 +81,12 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
   const [productQuantity, setProductQuantity] = useState(1);
 
   // Handlers para campos de formulário
-  const handleChange = (field: string, value: string) => {
+  function handleChange(field: string, value: string) {
     setFormData({ ...formData, [field]: value });
-  };
+  }
 
   // Adicionar serviço
-  const handleAddService = () => {
+  function handleAddService() {
     if (!selectedService) return;
     
     const service = serviceOptions.find(s => s.name === selectedService);
@@ -101,10 +98,10 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
       });
       setSelectedService("");
     }
-  };
+  }
 
   // Adicionar produto
-  const handleAddProduct = () => {
+  function handleAddProduct() {
     if (!selectedProduct || productQuantity <= 0) return;
     
     const product = productOptions.find(p => p.name === selectedProduct);
@@ -121,39 +118,39 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
       setSelectedProduct("");
       setProductQuantity(1);
     }
-  };
+  }
 
   // Remover serviço
-  const handleRemoveService = (id: number) => {
+  function handleRemoveService(id: string | number) {
     setFormData({
       ...formData,
       services: formData.services.filter(s => s.id !== id),
     });
-  };
+  }
 
   // Remover produto
-  const handleRemoveProduct = (id: number) => {
+  function handleRemoveProduct(id: number) {
     setFormData({
       ...formData,
       products: formData.products.filter(p => p.id !== id),
     });
-  };
+  }
 
   // Calcular total
-  const calculateTotal = () => {
+  function calculateTotal() {
     let servicesTotal = formData.services.reduce(
       (sum, service) => sum + service.price,
       0
     );
     let productsTotal = formData.products.reduce(
-      (sum, product) => sum + product.subtotal,
+      (sum, product) => sum + (product.subtotal || 0),
       0
     );
     return servicesTotal + productsTotal;
-  };
+  }
   
   // Enviar formulário
-  const handleSubmit = () => {
+  function handleSubmit() {
     if (!formData.customer || !formData.bikeModel || !formData.issueDescription) {
       return;
     }

@@ -2,23 +2,13 @@
 import React from "react";
 import { Card, CardHeader, CardContent, CardFooter, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Bike, Calendar, Clock, User } from "lucide-react";
-import ServiceStatus, { ServiceStatusType } from "./ServiceStatus";
+import { ArrowRight, Bike, Calendar, Clock } from "lucide-react";
+import ServiceStatus from "./ServiceStatus";
+import { ServiceOrder } from "@/types";
 
 interface ServiceOrderCardProps {
-  order: {
-    id: string;
-    customer: string;
-    bikeModel: string;
-    issueDescription: string;
-    status: ServiceStatusType;
-    priority: "Baixa" | "Normal" | "Alta" | "Urgente";
-    createdAt: string;
-    scheduledFor: string;
-    technician: string | null;
-    totalPrice: number;
-  };
-  onViewDetails: (order: any) => void;
+  order: ServiceOrder;
+  onViewDetails: (order: ServiceOrder) => void;
 }
 
 const ServiceOrderCard: React.FC<ServiceOrderCardProps> = ({ order, onViewDetails }) => {

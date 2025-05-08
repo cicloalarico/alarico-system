@@ -1,5 +1,6 @@
+
 export type PriorityType = 'Baixa' | 'Normal' | 'Alta' | 'Urgente';
-export type ServiceStatusType = 'Aguardando' | 'Em Andamento' | 'Concluído' | 'Cancelado';
+export type ServiceStatusType = 'Aberta' | 'Em andamento' | 'Aguardando peças' | 'Concluída' | 'Entregue' | 'Cancelada' | 'Aguardando';
 
 export interface ServiceOrder {
   id: string;
@@ -10,9 +11,9 @@ export interface ServiceOrder {
   priority: PriorityType;
   createdAt: string;
   scheduledFor: string;
-  technician: string;
+  technician: string | null;
   totalPrice: number;
-  completedAt?: string;
+  completedAt?: string | null;
   notes?: string;
   services?: ServiceItem[];
   products?: ProductItem[];
@@ -29,6 +30,7 @@ export interface ProductItem {
   name: string;
   price: number;
   quantity: number;
+  subtotal?: number;
 }
 
 export interface User {
@@ -67,6 +69,8 @@ export interface Product {
   supplier: string;
   location?: string;
   lastUpdated?: string;
+  price?: number;
+  quantity?: number;
 }
 
 export interface StockMovement {

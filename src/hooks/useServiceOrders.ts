@@ -1,9 +1,8 @@
 
 import { useState } from 'react';
 import { useToast } from "@/components/ui/use-toast";
-import { ServiceOrder } from '@/types';
-import { ServiceStatusType } from '@/components/service-orders/ServiceStatus';
-import { PriorityType, technicianOptions, initialServiceOrders } from '@/data/serviceOrdersData';
+import { ServiceOrder, ServiceStatusType, PriorityType } from '@/types';
+import { technicianOptions, initialServiceOrders } from '@/data/serviceOrdersData';
 
 export const useServiceOrders = () => {
   const { toast } = useToast();
@@ -33,13 +32,13 @@ export const useServiceOrders = () => {
       customer: data.customer,
       bikeModel: data.bikeModel,
       issueDescription: data.issueDescription,
-      status: "Aberta" as ServiceStatusType,
+      status: "Aberta",
       priority,
       createdAt: new Date().toISOString().split("T")[0],
       scheduledFor: data.scheduledFor,
       completedAt: null,
-      technician: data.technicianId ? technicianOptions.find(t => t.id === parseInt(data.technicianId))?.name : null,
-      services: data.services,
+      technician: data.technicianId ? technicianOptions.find(t => t.id === parseInt(data.technicianId))?.name || null : null,
+      services: data.services ? data.services.map((s: any) => ({ ...s, id: String(s.id) })) : [],
       products: data.products,
       totalPrice: data.totalPrice,
       notes: data.notes,

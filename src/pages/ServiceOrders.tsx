@@ -50,13 +50,11 @@ const ServiceOrders = () => {
         setActiveTab={setActiveTab}
       />
 
-      {/* The TabsContent from ServiceOrdersFilter will wrap this content */}
       <ServiceOrdersList
         orders={filteredServiceOrders}
         onViewDetails={handleViewServiceOrder}
       />
 
-      {/* Forms and Dialogs */}
       <ServiceOrderForm
         isOpen={isAddDialogOpen}
         onClose={() => setIsAddDialogOpen(false)}

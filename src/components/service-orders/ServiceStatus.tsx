@@ -1,8 +1,7 @@
 
 import React from "react";
 import { Badge } from "@/components/ui/badge";
-
-export type ServiceStatusType = "Aberta" | "Em andamento" | "Aguardando peças" | "Concluída" | "Entregue" | "Cancelada";
+import { ServiceStatusType } from "@/types";
 
 interface ServiceStatusProps {
   status: ServiceStatusType;
@@ -15,6 +14,7 @@ const statusColors: Record<ServiceStatusType, string> = {
   "Concluída": "bg-green-100 text-green-800",
   "Entregue": "bg-gray-100 text-gray-800",
   "Cancelada": "bg-red-100 text-red-800",
+  "Aguardando": "bg-blue-100 text-blue-800",
 };
 
 const ServiceStatus: React.FC<ServiceStatusProps> = ({ status }) => {

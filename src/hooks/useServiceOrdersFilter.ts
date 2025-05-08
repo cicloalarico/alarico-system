@@ -1,7 +1,6 @@
 
 import { useState, useMemo } from 'react';
 import { ServiceOrder } from '@/types';
-import { ServiceStatusType } from '@/components/service-orders/ServiceStatus';
 
 export const useServiceOrdersFilter = (serviceOrders: ServiceOrder[]) => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -19,7 +18,7 @@ export const useServiceOrdersFilter = (serviceOrders: ServiceOrder[]) => {
       if (activeTab === "all") {
         return matchesSearch;
       } else if (activeTab === "pending") {
-        return matchesSearch && ["Aberta", "Em andamento", "Aguardando peças"].includes(order.status);
+        return matchesSearch && ["Aberta", "Em andamento", "Aguardando peças", "Aguardando"].includes(order.status);
       } else if (activeTab === "completed") {
         return matchesSearch && ["Concluída", "Entregue"].includes(order.status);
       }
