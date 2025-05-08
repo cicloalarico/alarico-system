@@ -294,45 +294,39 @@ const Bills: React.FC = () => {
   const handleDuplicateClick = (id: string) => {
     const foundBill = allBills.find(bill => bill.id === id);
     if (foundBill) {
-      setSelectedBill(foundBill);
+      if ("employeeName" in foundBill) {
+        // Se for um salário de funcionário, armazena no estado apropriado
+        setSelectedEmployeeSalary(foundBill as EmployeeSalary);
+        setSelectedBill(undefined);
+      } else {
+        // Se for uma conta regular, armazena no estado apropriado
+        setSelectedBill(foundBill);
+        setSelectedEmployeeSalary(undefined);
+      }
       setIsDuplicateConfirmDialogOpen(true);
     }
   };
   
   // Manipulador para confirmar duplicação de conta
   const handleConfirmDuplicate = () => {
-    if (!selectedBill) return;
+    const nextMonth = new Date();
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
     
-    if ("employeeName" in selectedBill) {
+    if (selectedEmployeeSalary) {
       // Duplicar salário de funcionário
-      const nextMonth = new Date();
-      nextMonth.setMonth(nextMonth.getMonth() + 1);
-      
       const newEmployeeSalary: EmployeeSalary = {
-        ...selectedBill,
+        ...selectedEmployeeSalary,
         id: `SAL${new Date().getFullYear()}${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
-        description: `${selectedBill.description.split('-')[0].trim()} - ${format(nextMonth, 'MMMM/yyyy', { locale: ptBR })}`,
+        description: `${selectedEmployeeSalary.description.split('-')[0].trim()} - ${format(nextMonth, 'MMMM/yyyy', { locale: ptBR })}`,
         status: "pendente" as BillStatusType,
         dueDate: format(nextMonth, 'yyyy-MM-dd'),
         paymentDate: undefined,
-        parentBillId: selectedBill.id,
-        // Garantindo que todos os campos necessários de EmployeeSalary sejam incluídos
-        employeeId: selectedBill.employeeId,
-        employeeName: selectedBill.employeeName,
-        baseSalary: selectedBill.baseSalary,
-        commission: selectedBill.commission,
-        salesTarget: selectedBill.salesTarget,
-        advances: [...selectedBill.advances], // Clonando o array de adiantamentos
-        totalAdvances: selectedBill.totalAdvances,
-        netSalary: selectedBill.netSalary
+        parentBillId: selectedEmployeeSalary.id,
       };
       
       setEmployeeSalaries([newEmployeeSalary, ...employeeSalaries]);
-    } else {
+    } else if (selectedBill) {
       // Duplicar conta regular
-      const nextMonth = new Date();
-      nextMonth.setMonth(nextMonth.getMonth() + 1);
-      
       const newBill: Bill = {
         ...selectedBill,
         id: `B${new Date().getFullYear()}${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
@@ -348,7 +342,7 @@ const Bills: React.FC = () => {
     setIsDuplicateConfirmDialogOpen(false);
     toast({
       title: "Conta duplicada com sucesso",
-      description: `Uma nova cópia da conta ${selectedBill.description} foi criada.`,
+      description: `Uma nova cópia da conta ${selectedEmployeeSalary ? selectedEmployeeSalary.description : selectedBill?.description} foi criada.`,
     });
   };
   
