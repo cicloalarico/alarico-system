@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Bill, EmployeeSalary, EmployeeAdvance, BillStatusType } from "@/types";
-import { billsData, employeeSalariesData } from "@/data/billsData";
+import { billsData, employeeSalariesData, suppliersData } from "@/data/billsData";
 import { toast } from "@/hooks/use-toast";
 
 import BillsList from "@/components/bills/BillsList";

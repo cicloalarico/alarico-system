@@ -1,4 +1,3 @@
-
 import { Bill, EmployeeSalary, EmployeeAdvance, BillStatusType } from "@/types";
 
 // Dados de exemplo para contas a pagar
@@ -192,4 +191,13 @@ export const billFrequencies = [
   { value: "trimestral", label: "Trimestral" },
   { value: "semestral", label: "Semestral" },
   { value: "anual", label: "Anual" }
+];
+
+// Add suppliers data
+export const suppliersData = [
+  { id: 1, name: "BikeParts Ltda" },
+  { id: 2, name: "Peças Express" },
+  { id: 3, name: "Distribuidora Cycle" },
+  { id: 4, name: "Importadora Biketech" },
+  { id: 5, name: "Acessórios Bike & Cia" },
 ];
