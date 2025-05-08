@@ -26,15 +26,24 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+// Add sample employees data
+const employeesData = [
+  { id: 1, name: "Carlos Oliveira" },
+  { id: 2, name: "André Santos" },
+  { id: 3, name: "Fernanda Lima" },
+  { id: 4, name: "Roberto Silva" },
+  { id: 5, name: "Juliana Mendes" },
+];
+
 const Bills: React.FC = () => {
   // Estados para armazenar as contas a pagar e salários de funcionários
   const [bills, setBills] = useState<Bill[]>(billsData);
   const [employeeSalaries, setEmployeeSalaries] = useState<EmployeeSalary[]>(employeeSalariesData);
   
   // Estados para os modais
-  const [isAddBillDialogOpen, setIsAddBillDialogOpen] = useState(false);
+  const [isAddBillOpen, setIsAddBillOpen] = useState(false);
   const [isAddEmployeeSalaryDialogOpen, setIsAddEmployeeSalaryDialogOpen] = useState(false);
-  const [isEditBillDialogOpen, setIsEditBillDialogOpen] = useState(false);
+  const [isEditBillOpen, setIsEditBillOpen] = useState(false);
   const [isEditEmployeeSalaryDialogOpen, setIsEditEmployeeSalaryDialogOpen] = useState(false);
   const [isBillDetailsDialogOpen, setIsBillDetailsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -148,7 +157,7 @@ const Bills: React.FC = () => {
   // Manipuladores para conta regular
   const handleAddBill = (newBill: Bill) => {
     setBills([newBill, ...bills]);
-    setIsAddBillDialogOpen(false);
+    setIsAddBillOpen(false);
     toast({
       title: "Conta cadastrada com sucesso",
       description: `A conta ${newBill.description} foi adicionada.`,
@@ -170,7 +179,7 @@ const Bills: React.FC = () => {
       );
     }
     
-    setIsEditBillDialogOpen(false);
+    setIsEditBillOpen(false);
     setIsEditEmployeeSalaryDialogOpen(false);
     
     toast({
@@ -276,7 +285,7 @@ const Bills: React.FC = () => {
       const bill = bills.find(bill => bill.id === id);
       if (bill) {
         setSelectedBill(bill);
-        setIsEditBillDialogOpen(true);
+        setIsEditBillOpen(true);
       }
     }
   };
@@ -357,7 +366,7 @@ const Bills: React.FC = () => {
           <p className="text-gray-500">Gerencie as despesas e obrigações financeiras</p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={() => setIsAddBillDialogOpen(true)}>
+          <Button onClick={() => setIsAddBillOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Nova Conta
           </Button>
@@ -482,9 +491,11 @@ const Bills: React.FC = () => {
 
       {/* Modal de Adicionar Nova Conta */}
       <BillForm
-        isOpen={isAddBillDialogOpen}
-        onClose={() => setIsAddBillDialogOpen(false)}
-        onSave={handleAddBill}
+        isOpen={isAddBillOpen}
+        onClose={() => setIsAddBillOpen(false)}
+        onSubmit={handleAddBill}
+        suppliers={suppliersData}
+        employees={employeesData} // Add employees data here
       />
 
       {/* Modal de Adicionar Novo Salário */}
@@ -496,10 +507,12 @@ const Bills: React.FC = () => {
 
       {/* Modal de Editar Conta */}
       <BillForm
-        isOpen={isEditBillDialogOpen}
-        onClose={() => setIsEditBillDialogOpen(false)}
-        onSave={handleEditBill}
+        isOpen={isEditBillOpen}
+        onClose={() => setIsEditBillOpen(false)}
+        onSubmit={handleEditBill}
         initialData={selectedBill}
+        suppliers={suppliersData}
+        employees={employeesData} // Add employees data here
       />
       
       {/* Modal de Editar Salário */}

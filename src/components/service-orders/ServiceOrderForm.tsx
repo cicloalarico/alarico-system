@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -68,6 +67,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
     notes: "",
     services: [] as (Service & { customPrice?: number })[],
     products: [] as (Product & { quantity: number, subtotal: number })[],
+    laborValue: 0, // Novo campo para valor de mão de obra
   });
   
   // Estado para campos temporários
@@ -78,7 +78,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
   const [productCustomPrice, setProductCustomPrice] = useState<number | undefined>(undefined);
 
   // Handlers para campos de formulário
-  function handleChange(field: string, value: string) {
+  function handleChange(field: string, value: string | number) {
     setFormData({ ...formData, [field]: value });
   }
 
@@ -203,7 +203,8 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
       (sum, product) => sum + (product.subtotal || 0),
       0
     );
-    return servicesTotal + productsTotal;
+    // Adicionar o valor de mão de obra ao total
+    return servicesTotal + productsTotal + (formData.laborValue || 0);
   }
   
   // Enviar formulário
@@ -228,6 +229,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
       notes: "",
       services: [],
       products: [],
+      laborValue: 0,
     });
   };
 
@@ -547,6 +549,19 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
           </div>
 
           <div className="space-y-2 border-t pt-4">
+            <Label htmlFor="laborValue">Valor de Mão de Obra (R$)</Label>
+            <Input
+              id="laborValue"
+              type="number"
+              step="0.01"
+              min="0"
+              value={formData.laborValue}
+              onChange={(e) => handleChange("laborValue", parseFloat(e.target.value) || 0)}
+              className="w-full"
+            />
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="notes">Observações</Label>
             <Textarea
               id="notes"

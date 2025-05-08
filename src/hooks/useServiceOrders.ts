@@ -42,6 +42,7 @@ export const useServiceOrders = () => {
       products: data.products,
       totalPrice: data.totalPrice,
       notes: data.notes,
+      laborValue: data.laborValue || 0, // Add the laborValue field
     };
 
     setServiceOrders([...serviceOrders, newOrder]);

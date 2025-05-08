@@ -37,17 +37,17 @@ interface ServiceOrderDetailsProps {
   onUpdateStatus?: (orderId: string, status: ServiceStatusType) => void;
 }
 
-const ServiceOrderDetails: React.FC<ServiceOrderDetailsProps> = ({ 
-  isOpen, 
-  onClose, 
+const ServiceOrderDetails: React.FC<ServiceOrderDetailsProps> = ({
+  isOpen,
+  onClose,
   order,
-  onUpdateStatus
+  onUpdateStatus,
 }) => {
   if (!order) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <span>OS: {order.id}</span>
@@ -165,6 +165,16 @@ const ServiceOrderDetails: React.FC<ServiceOrderDetailsProps> = ({
             )}
           </div>
 
+          {/* Labor Value */}
+          {order?.laborValue > 0 && (
+            <div className="mt-4">
+              <h3 className="font-medium mb-2">Valor de Mão de Obra</h3>
+              <div className="bg-gray-50 p-3 rounded border">
+                <span className="font-medium">R$ {order.laborValue.toFixed(2)}</span>
+              </div>
+            </div>
+          )}
+
           {order.notes && (
             <div className="border-t pt-4">
               <h3 className="font-medium mb-2">Observações</h3>
@@ -172,10 +182,11 @@ const ServiceOrderDetails: React.FC<ServiceOrderDetailsProps> = ({
             </div>
           )}
 
-          <div className="bg-gray-50 p-4 rounded-md mt-4">
+          {/* Total */}
+          <div className="mt-4 bg-gray-50 p-4 rounded-md border">
             <div className="flex justify-between items-center text-lg font-semibold">
               <span>Total:</span>
-              <span>R$ {order.totalPrice.toFixed(2)}</span>
+              <span>R$ {order?.totalPrice.toFixed(2)}</span>
             </div>
           </div>
 

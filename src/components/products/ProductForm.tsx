@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -159,7 +158,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
             type="number"
             step="0.1"
             min="0"
-            value={product.profitMargin || 0}
+            value={product.profitMargin !== undefined ? product.profitMargin : 0}
             onChange={(e) => handleMarginChange(parseFloat(e.target.value) || 0)}
           />
         </div>

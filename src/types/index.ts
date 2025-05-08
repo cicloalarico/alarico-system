@@ -1,4 +1,3 @@
-
 export type PriorityType = 'Baixa' | 'Normal' | 'Alta' | 'Urgente';
 export type ServiceStatusType = 'Aberta' | 'Em andamento' | 'Aguardando peças' | 'Concluída' | 'Entregue' | 'Cancelada' | 'Aguardando';
 
@@ -17,6 +16,7 @@ export interface ServiceOrder {
   notes?: string;
   services?: ServiceItem[];
   products?: ProductItem[];
+  laborValue?: number; // Added the laborValue field
 }
 
 export interface ServiceItem {
