@@ -90,3 +90,70 @@ export interface DateRange {
   from: Date;
   to: Date | undefined;
 }
+
+// Novos tipos para Vendas (Sales)
+export interface Sale {
+  id: string;
+  customerName: string;
+  customerId?: number;
+  date: string;
+  items: SaleItem[];
+  totalAmount: number;
+  paymentMethod: PaymentMethodType;
+  status: SaleStatusType;
+  invoiceNumber?: string;
+  notes?: string;
+}
+
+export interface SaleItem {
+  id: string;
+  productId: number;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  subtotal: number;
+}
+
+export type PaymentMethodType = 'Dinheiro' | 'Cartão de Crédito' | 'Cartão de Débito' | 'PIX' | 'Transferência' | 'Boleto';
+export type SaleStatusType = 'Concluída' | 'Cancelada' | 'Pendente';
+
+// Novos tipos para Financeiro (Financial)
+export interface FinancialTransaction {
+  id: string;
+  date: string;
+  description: string;
+  category: string;
+  amount: number;
+  type: 'receita' | 'despesa';
+  paymentMethod: PaymentMethodType;
+  status: 'pago' | 'pendente' | 'cancelado';
+  dueDate?: string;
+  relatedId?: string; // ID relacionado a uma venda ou ordem de serviço
+  notes?: string;
+}
+
+export interface CashFlow {
+  date: string;
+  initialBalance: number;
+  inflow: number;
+  outflow: number;
+  finalBalance: number;
+}
+
+// Novos tipos para Agenda (Calendar)
+export interface Appointment {
+  id: string;
+  title: string;
+  customerId?: number;
+  customerName: string;
+  start: string;
+  end: string;
+  description?: string;
+  serviceOrderId?: string;
+  technicianId?: number;
+  technicianName?: string;
+  status: AppointmentStatusType;
+  color?: string;
+}
+
+export type AppointmentStatusType = 'Agendado' | 'Confirmado' | 'Em andamento' | 'Concluído' | 'Cancelado';

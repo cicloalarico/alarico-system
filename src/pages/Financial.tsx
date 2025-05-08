@@ -1,364 +1,274 @@
 
 import React, { useState } from "react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus, ArrowUpRight, ArrowDownLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BarChart, LineChart, PieChart } from "@/components/ui/charts";
-import { DollarSign, TrendingUp, TrendingDown, Plus, Calendar } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
+import { financialTransactionsData, cashFlowData } from "@/data/financialData";
+import { FinancialTransaction } from "@/types";
+import { toast } from "@/hooks/use-toast";
 
-// Mock data for financial charts
-const revenueData = [
-  { name: "Jan", value: 4000 },
-  { name: "Fev", value: 3000 },
-  { name: "Mar", value: 2000 },
-  { name: "Abr", value: 2780 },
-  { name: "Mai", value: 1890 },
-  { name: "Jun", value: 2390 },
-  { name: "Jul", value: 3490 },
-];
+import TransactionsList from "@/components/financial/TransactionsList";
+import TransactionForm from "@/components/financial/TransactionForm";
+import CashFlowChart from "@/components/financial/CashFlowChart";
 
-const expensesByCategory = [
-  { name: "Estoque", value: 35 },
-  { name: "Salários", value: 30 },
-  { name: "Aluguel", value: 15 },
-  { name: "Marketing", value: 10 },
-  { name: "Outros", value: 10 },
-];
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
-// Mock transactions for the table
-const recentTransactions = [
-  { id: 1, date: "2024-04-01", description: "Venda de Bicicleta Mountain Bike", amount: 2500, type: "income" },
-  { id: 2, date: "2024-04-02", description: "Pagamento de Fornecedor", amount: 1200, type: "expense" },
-  { id: 3, date: "2024-04-03", description: "Serviço de Manutenção", amount: 150, type: "income" },
-  { id: 4, date: "2024-04-04", description: "Compra de Peças", amount: 800, type: "expense" },
-  { id: 5, date: "2024-04-05", description: "Venda de Acessórios", amount: 350, type: "income" },
-];
+const Financial: React.FC = () => {
+  const [transactions, setTransactions] = useState<FinancialTransaction[]>(
+    financialTransactionsData
+  );
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<
+    FinancialTransaction | undefined
+  >(undefined);
+  const [activeTab, setActiveTab] = useState("todos");
 
-const Financial = () => {
-  const { toast } = useToast();
-  const [selectedDate, setSelectedDate] = useState("");
-  
-  const handleAddTransaction = (type: string) => {
+  const calculateTotals = () => {
+    const totals = {
+      receitas: 0,
+      despesas: 0,
+      pendentes: 0,
+      saldo: 0,
+    };
+
+    transactions.forEach((transaction) => {
+      if (transaction.status === "pago") {
+        if (transaction.type === "receita") {
+          totals.receitas += transaction.amount;
+          totals.saldo += transaction.amount;
+        } else {
+          totals.despesas += transaction.amount;
+          totals.saldo -= transaction.amount;
+        }
+      } else if (transaction.status === "pendente" && transaction.type === "despesa") {
+        totals.pendentes += transaction.amount;
+      }
+    });
+
+    return totals;
+  };
+
+  const handleAddTransaction = (transaction: FinancialTransaction) => {
+    setTransactions([transaction, ...transactions]);
+    setIsAddDialogOpen(false);
     toast({
-      title: "Transação registrada",
-      description: `A ${type === "income" ? "receita" : "despesa"} foi adicionada com sucesso.`,
+      title: "Transação cadastrada com sucesso",
+      description: `A transação ${transaction.id} foi adicionada com sucesso.`,
     });
   };
 
+  const handleEditTransaction = (transaction: FinancialTransaction) => {
+    setTransactions(
+      transactions.map((t) => (t.id === transaction.id ? transaction : t))
+    );
+    setIsEditDialogOpen(false);
+    toast({
+      title: "Transação atualizada com sucesso",
+      description: `A transação ${transaction.id} foi atualizada com sucesso.`,
+    });
+  };
+
+  const handleDeleteTransaction = () => {
+    if (selectedTransaction) {
+      setTransactions(
+        transactions.filter((t) => t.id !== selectedTransaction.id)
+      );
+      setIsDeleteDialogOpen(false);
+      toast({
+        title: "Transação excluída com sucesso",
+        description: `A transação ${selectedTransaction.id} foi excluída com sucesso.`,
+      });
+    }
+  };
+
+  const handleEditClick = (id: string) => {
+    const transaction = transactions.find((t) => t.id === id);
+    setSelectedTransaction(transaction);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleDeleteClick = (id: string) => {
+    const transaction = transactions.find((t) => t.id === id);
+    setSelectedTransaction(transaction);
+    setIsDeleteDialogOpen(true);
+  };
+
+  // Filtra transações com base na aba selecionada
+  const getFilteredTransactions = () => {
+    switch (activeTab) {
+      case "receitas":
+        return transactions.filter((t) => t.type === "receita");
+      case "despesas":
+        return transactions.filter((t) => t.type === "despesa");
+      case "pendentes":
+        return transactions.filter(
+          (t) => t.status === "pendente" && t.type === "despesa"
+        );
+      default:
+        return transactions;
+    }
+  };
+
+  const totals = calculateTotals();
+  const filteredTransactions = getFilteredTransactions();
+
+  // Formatação de números para moeda brasileira
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(value);
+  };
+
   return (
-    <div className="container mx-auto py-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-shop-primary">Gestão Financeira</h1>
-        <p className="text-muted-foreground mt-1">
-          Acompanhe e gerencie as finanças da sua empresa
-        </p>
+    <div className="container mx-auto p-4 space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold">Financeiro</h1>
+          <p className="text-gray-500">Controle financeiro da empresa</p>
+        </div>
+        <div className="space-x-2">
+          <Button onClick={() => setIsAddDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Nova Transação
+          </Button>
+        </div>
       </div>
-      
-      {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+
+      {/* Cards com os resumos */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Receita Total
-            </CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-gray-500">Receitas</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">R$ 45.231,89</div>
-            <p className="text-xs text-muted-foreground">
-              +20.1% em relação ao mês anterior
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Despesas
-            </CardTitle>
-            <TrendingDown className="h-4 w-4 text-destructive" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">R$ 12.345,67</div>
-            <p className="text-xs text-muted-foreground">
-              +5.2% em relação ao mês anterior
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Lucro
-            </CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">R$ 32.886,22</div>
-            <p className="text-xs text-muted-foreground">
-              +25.8% em relação ao mês anterior
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Contas a Receber
-            </CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">R$ 8.450,00</div>
-            <p className="text-xs text-muted-foreground">
-              12 clientes com pagamentos pendentes
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-      
-      {/* Charts and Transactions */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Faturamento Mensal</CardTitle>
-            <CardDescription>Análise de receitas e despesas mensais</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-2">
-            <div className="h-[300px]">
-              <BarChart
-                data={revenueData}
-                index="name"
-                categories={["value"]}
-                colors={["#f97316"]}
-                valueFormatter={(value) => `R$ ${value}`}
-              />
+            <div className="flex items-center">
+              <ArrowUpRight className="mr-2 h-5 w-5 text-green-600" />
+              <span className="text-2xl font-bold text-green-600">
+                {formatCurrency(totals.receitas)}
+              </span>
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
-          <CardHeader>
-            <CardTitle>Distribuição de Despesas</CardTitle>
-            <CardDescription>Por categoria</CardDescription>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-gray-500">Despesas</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px]">
-              <PieChart
-                data={expensesByCategory}
-                index="name"
-                categories={["value"]}
-                valueFormatter={(value) => `${value}%`}
-                colors={["#f97316", "#94a3b8", "#64748b", "#475569", "#334155"]}
-              />
+            <div className="flex items-center">
+              <ArrowDownLeft className="mr-2 h-5 w-5 text-red-600" />
+              <span className="text-2xl font-bold text-red-600">
+                {formatCurrency(totals.despesas)}
+              </span>
             </div>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-gray-500">
+              Despesas Pendentes
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <span className="text-2xl font-bold text-amber-600">
+              {formatCurrency(totals.pendentes)}
+            </span>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-gray-500">Saldo</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <span
+              className={`text-2xl font-bold ${
+                totals.saldo >= 0 ? "text-green-600" : "text-red-600"
+              }`}
+            >
+              {formatCurrency(totals.saldo)}
+            </span>
+          </CardContent>
+        </Card>
       </div>
-      
-      {/* Transactions Management */}
-      <div className="mt-6">
-        <Tabs defaultValue="recent" className="w-full">
-          <TabsList className="mb-6">
-            <TabsTrigger value="recent">Transações Recentes</TabsTrigger>
-            <TabsTrigger value="add-income">Adicionar Receita</TabsTrigger>
-            <TabsTrigger value="add-expense">Adicionar Despesa</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="recent">
-            <Card>
-              <CardHeader>
-                <CardTitle>Histórico de Transações</CardTitle>
-                <CardDescription>Acompanhe suas receitas e despesas recentes</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left py-3 px-4 font-medium">Data</th>
-                        <th className="text-left py-3 px-4 font-medium">Descrição</th>
-                        <th className="text-right py-3 px-4 font-medium">Valor</th>
-                        <th className="text-right py-3 px-4 font-medium">Tipo</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {recentTransactions.map((transaction) => (
-                        <tr key={transaction.id} className="border-b hover:bg-muted/50">
-                          <td className="py-2 px-4">
-                            {new Date(transaction.date).toLocaleDateString('pt-BR')}
-                          </td>
-                          <td className="py-2 px-4">{transaction.description}</td>
-                          <td className={`py-2 px-4 text-right ${
-                            transaction.type === 'income' ? 'text-green-600' : 'text-destructive'
-                          }`}>
-                            {transaction.type === 'income' ? '+' : '-'} 
-                            R$ {transaction.amount.toFixed(2)}
-                          </td>
-                          <td className="py-2 px-4 text-right">
-                            <span className={`inline-block px-2 py-1 rounded-full text-xs ${
-                              transaction.type === 'income' 
-                                ? 'bg-green-100 text-green-800' 
-                                : 'bg-red-100 text-red-800'
-                            }`}>
-                              {transaction.type === 'income' ? 'Receita' : 'Despesa'}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-              <CardFooter className="flex justify-between">
-                <Button variant="outline">Exportar</Button>
-                <Button variant="outline">Ver Todos</Button>
-              </CardFooter>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="add-income">
-            <Card>
-              <CardHeader>
-                <CardTitle>Registrar Nova Receita</CardTitle>
-                <CardDescription>Adicione uma nova entrada de receita</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="income-date">Data</Label>
-                    <Input 
-                      id="income-date" 
-                      type="date" 
-                      value={selectedDate}
-                      onChange={(e) => setSelectedDate(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="income-category">Categoria</Label>
-                    <Select>
-                      <SelectTrigger id="income-category">
-                        <SelectValue placeholder="Selecione uma categoria" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="sale">Venda de Produto</SelectItem>
-                        <SelectItem value="service">Serviço</SelectItem>
-                        <SelectItem value="other">Outro</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="income-description">Descrição</Label>
-                  <Input id="income-description" placeholder="Descreva a receita" />
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="income-amount">Valor (R$)</Label>
-                    <Input id="income-amount" type="number" min="0" step="0.01" placeholder="0,00" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="income-payment-method">Método de Pagamento</Label>
-                    <Select>
-                      <SelectTrigger id="income-payment-method">
-                        <SelectValue placeholder="Forma de pagamento" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="cash">Dinheiro</SelectItem>
-                        <SelectItem value="credit">Cartão de Crédito</SelectItem>
-                        <SelectItem value="debit">Cartão de Débito</SelectItem>
-                        <SelectItem value="transfer">Transferência</SelectItem>
-                        <SelectItem value="pix">PIX</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button className="w-full" onClick={() => handleAddTransaction("income")}>
-                  <Plus className="mr-2 h-4 w-4" /> Registrar Receita
-                </Button>
-              </CardFooter>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="add-expense">
-            <Card>
-              <CardHeader>
-                <CardTitle>Registrar Nova Despesa</CardTitle>
-                <CardDescription>Adicione uma nova entrada de despesa</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="expense-date">Data</Label>
-                    <Input 
-                      id="expense-date" 
-                      type="date" 
-                      value={selectedDate}
-                      onChange={(e) => setSelectedDate(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="expense-category">Categoria</Label>
-                    <Select>
-                      <SelectTrigger id="expense-category">
-                        <SelectValue placeholder="Selecione uma categoria" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="inventory">Estoque</SelectItem>
-                        <SelectItem value="rent">Aluguel</SelectItem>
-                        <SelectItem value="salary">Salários</SelectItem>
-                        <SelectItem value="marketing">Marketing</SelectItem>
-                        <SelectItem value="utilities">Serviços Públicos</SelectItem>
-                        <SelectItem value="other">Outros</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="expense-description">Descrição</Label>
-                  <Input id="expense-description" placeholder="Descreva a despesa" />
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="expense-amount">Valor (R$)</Label>
-                    <Input id="expense-amount" type="number" min="0" step="0.01" placeholder="0,00" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="expense-payment-method">Método de Pagamento</Label>
-                    <Select>
-                      <SelectTrigger id="expense-payment-method">
-                        <SelectValue placeholder="Forma de pagamento" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="cash">Dinheiro</SelectItem>
-                        <SelectItem value="credit">Cartão de Crédito</SelectItem>
-                        <SelectItem value="debit">Cartão de Débito</SelectItem>
-                        <SelectItem value="transfer">Transferência</SelectItem>
-                        <SelectItem value="pix">PIX</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button className="w-full" onClick={() => handleAddTransaction("expense")}>
-                  <Plus className="mr-2 h-4 w-4" /> Registrar Despesa
-                </Button>
-              </CardFooter>
-            </Card>
+
+      <Separator />
+
+      {/* Gráfico de Fluxo de Caixa */}
+      <CashFlowChart data={cashFlowData} />
+
+      <Separator />
+
+      {/* Lista de transações com filtro por abas */}
+      <div className="space-y-4">
+        <Tabs defaultValue="todos" value={activeTab} onValueChange={setActiveTab}>
+          <div className="flex justify-between items-center">
+            <TabsList>
+              <TabsTrigger value="todos">Todos</TabsTrigger>
+              <TabsTrigger value="receitas">Receitas</TabsTrigger>
+              <TabsTrigger value="despesas">Despesas</TabsTrigger>
+              <TabsTrigger value="pendentes">Pendentes</TabsTrigger>
+            </TabsList>
+          </div>
+
+          <TabsContent value={activeTab} className="mt-6">
+            <TransactionsList
+              transactions={filteredTransactions}
+              onEdit={handleEditClick}
+              onDelete={handleDeleteClick}
+            />
           </TabsContent>
         </Tabs>
       </div>
+
+      <TransactionForm
+        isOpen={isAddDialogOpen}
+        onClose={() => setIsAddDialogOpen(false)}
+        onSave={handleAddTransaction}
+      />
+
+      <TransactionForm
+        isOpen={isEditDialogOpen}
+        onClose={() => setIsEditDialogOpen(false)}
+        onSave={handleEditTransaction}
+        initialData={selectedTransaction}
+      />
+
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir a transação{" "}
+              {selectedTransaction?.id}? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteTransaction}>
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
