@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -220,13 +219,11 @@ const ServiceOrders = () => {
     const orderCount = serviceOrders.length;
     
     // Ensure the priority is valid by checking against allowed values
-    let priority: PriorityType = "Normal"; // Default to Normal
-    
-    // Check if data.priority is one of the valid options
-    if (data.priority === "Baixa" || data.priority === "Normal" || 
-        data.priority === "Alta" || data.priority === "Urgente") {
-      priority = data.priority as PriorityType;
-    }
+    // Using a type assertion with a proper validation ensures TypeScript knows this is safe
+    const validPriorities: PriorityType[] = ["Baixa", "Normal", "Alta", "Urgente"];
+    const priority: PriorityType = validPriorities.includes(data.priority as PriorityType) 
+      ? (data.priority as PriorityType) 
+      : "Normal";
     
     const newOrder: ServiceOrder = {
       id: `OS2024${String(orderCount + 1).padStart(3, "0")}`,
@@ -234,7 +231,7 @@ const ServiceOrders = () => {
       bikeModel: data.bikeModel,
       issueDescription: data.issueDescription,
       status: "Aberta" as ServiceStatusType,
-      priority: priority, // Use our validated priority value
+      priority, // Now properly typed as PriorityType
       createdAt: new Date().toISOString().split("T")[0],
       scheduledFor: data.scheduledFor,
       completedAt: null,
