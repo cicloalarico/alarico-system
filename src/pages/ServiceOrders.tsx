@@ -26,7 +26,7 @@ import ServiceOrderCard from "@/components/service-orders/ServiceOrderCard";
 import ServiceOrderForm from "@/components/service-orders/ServiceOrderForm";
 import ServiceOrderDetails from "@/components/service-orders/ServiceOrderDetails";
 import { ServiceStatusType } from "@/components/service-orders/ServiceStatus";
-import { Product } from "@/types";
+import { Product, ServiceOrder } from "@/types";
 
 // Mock data for service orders
 const initialServiceOrders = [
@@ -215,16 +215,25 @@ const ServiceOrders = () => {
   const handleCreateServiceOrder = (data: any) => {
     const orderCount = serviceOrders.length;
     
-    // Explicitly cast the priority to the correct type
-    const priority = data.priority as "Baixa" | "Normal" | "Alta" | "Urgente";
+    // Define the type for priority explicitly
+    const priorityValues = ["Baixa", "Normal", "Alta", "Urgente"] as const;
+    type PriorityType = typeof priorityValues[number];
     
-    const newOrder = {
+    // Make sure the priority is one of the allowed values
+    let priority: PriorityType;
+    if (priorityValues.includes(data.priority as any)) {
+      priority = data.priority as PriorityType;
+    } else {
+      priority = "Normal";
+    }
+    
+    const newOrder: ServiceOrder = {
       id: `OS2024${String(orderCount + 1).padStart(3, "0")}`,
       customer: data.customer,
       bikeModel: data.bikeModel,
       issueDescription: data.issueDescription,
       status: "Aberta" as ServiceStatusType,
-      priority: priority, // Use the explicitly cast variable
+      priority: priority,
       createdAt: new Date().toISOString().split("T")[0],
       scheduledFor: data.scheduledFor,
       completedAt: null,
