@@ -83,8 +83,11 @@ const Customers = () => {
   const [customers, setCustomers] = useState(initialCustomers);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
+  const [editingCustomer, setEditingCustomer] = useState<any>(null);
+  
   const [newCustomer, setNewCustomer] = useState({
     name: "",
     email: "",
@@ -129,9 +132,36 @@ const Customers = () => {
     });
   };
 
+  const handleEditCustomer = () => {
+    if (!editingCustomer.name || !editingCustomer.email || !editingCustomer.cpf) {
+      toast({
+        title: "Erro ao editar cliente",
+        description: "Por favor, preencha os campos obrigatórios.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setCustomers(customers.map(customer => 
+      customer.id === editingCustomer.id ? editingCustomer : customer
+    ));
+    
+    setIsEditDialogOpen(false);
+    
+    toast({
+      title: "Cliente atualizado",
+      description: `${editingCustomer.name} foi atualizado com sucesso.`,
+    });
+  };
+
   const handleViewCustomer = (customer: any) => {
     setSelectedCustomer(customer);
     setIsViewDialogOpen(true);
+  };
+
+  const handleEditClick = (customer: any) => {
+    setEditingCustomer({ ...customer });
+    setIsEditDialogOpen(true);
   };
 
   const handleDeleteCustomer = (id: number) => {
@@ -147,6 +177,11 @@ const Customers = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setNewCustomer({ ...newCustomer, [name]: value });
+  };
+
+  const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setEditingCustomer({ ...editingCustomer, [name]: value });
   };
 
   return (
@@ -298,7 +333,10 @@ const Customers = () => {
                         >
                           <Eye className="mr-2 h-4 w-4" /> Visualizar
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="cursor-pointer">
+                        <DropdownMenuItem 
+                          className="cursor-pointer"
+                          onClick={() => handleEditClick(customer)}
+                        >
                           <Edit className="mr-2 h-4 w-4" /> Editar
                         </DropdownMenuItem>
                         <DropdownMenuItem
@@ -366,6 +404,90 @@ const Customers = () => {
             <Button variant="outline" onClick={() => setIsViewDialogOpen(false)}>
               Fechar
             </Button>
+            <Button onClick={() => {
+              setIsViewDialogOpen(false);
+              handleEditClick(selectedCustomer);
+            }}>
+              Editar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit customer dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar Cliente</DialogTitle>
+          </DialogHeader>
+          {editingCustomer && (
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-name">Nome completo *</Label>
+                  <Input
+                    id="edit-name"
+                    name="name"
+                    value={editingCustomer.name}
+                    onChange={handleEditInputChange}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-cpf">CPF/CNPJ *</Label>
+                  <Input
+                    id="edit-cpf"
+                    name="cpf"
+                    value={editingCustomer.cpf}
+                    onChange={handleEditInputChange}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-email">E-mail *</Label>
+                  <Input
+                    id="edit-email"
+                    name="email"
+                    type="email"
+                    value={editingCustomer.email}
+                    onChange={handleEditInputChange}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-phone">Telefone</Label>
+                  <Input
+                    id="edit-phone"
+                    name="phone"
+                    value={editingCustomer.phone}
+                    onChange={handleEditInputChange}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-address">Endereço</Label>
+                <Input
+                  id="edit-address"
+                  name="address"
+                  value={editingCustomer.address}
+                  onChange={handleEditInputChange}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-notes">Observações</Label>
+                <Textarea
+                  id="edit-notes"
+                  name="notes"
+                  value={editingCustomer.notes}
+                  onChange={handleEditInputChange}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleEditCustomer}>Salvar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

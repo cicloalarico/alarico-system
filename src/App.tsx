@@ -19,6 +19,9 @@ import NotFound from "./pages/NotFound";
 import Settings from "./pages/Settings";
 import Financial from "./pages/Financial";
 import Reports from "./pages/Reports";
+import Users from "./pages/Users";
+import Inventory from "./pages/Inventory";
+import Sales from "./pages/Sales";
 
 const queryClient = new QueryClient();
 
@@ -84,7 +87,10 @@ const App = () => {
               <Route element={<MainLayout onLogout={logout} />}>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/customers" element={<Customers />} />
+                <Route path="/users" element={<Users />} />
                 <Route path="/products" element={<Products />} />
+                <Route path="/inventory" element={<Inventory />} />
+                <Route path="/sales" element={<Sales />} />
                 <Route path="/services" element={<ServiceOrders />} />
                 <Route path="/financial" element={<Financial />} />
                 <Route path="/reports" element={<Reports />} />
