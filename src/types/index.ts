@@ -1,48 +1,82 @@
-
-export interface Product {
-  id: number;
-  name: string;
-  price: number;
-  stock: number;
-  quantity: number; // Changed from optional to required to match ServiceOrderForm.tsx
-}
-
-export interface Customer {
-  id: number;
-  name: string;
-  cpf?: string;
-  email?: string;
-  phone?: string;
-}
+export type PriorityType = 'Baixa' | 'Normal' | 'Alta' | 'Urgente';
+export type ServiceStatusType = 'Aguardando' | 'Em Andamento' | 'Concluído' | 'Cancelado';
 
 export interface ServiceOrder {
   id: string;
   customer: string;
   bikeModel: string;
   issueDescription: string;
-  status: "Aberta" | "Em andamento" | "Aguardando peças" | "Concluída" | "Entregue" | "Cancelada";
-  priority: "Baixa" | "Normal" | "Alta" | "Urgente";
+  status: ServiceStatusType;
+  priority: PriorityType;
   createdAt: string;
   scheduledFor: string;
-  completedAt: string | null;
-  technician: string | null;
-  services: Array<{
-    id: number;
-    name: string;
-    price: number;
-  }>;
-  products: Array<{
-    id: number;
-    name: string;
-    quantity: number;
-    price: number;
-    subtotal: number;
-  }>;
+  technician: string;
   totalPrice: number;
+  completedAt?: string;
+  notes?: string;
+  services?: ServiceItem[];
+  products?: ProductItem[];
+}
+
+export interface ServiceItem {
+  id: string;
+  name: string;
+  price: number;
+}
+
+export interface ProductItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+}
+
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  password: string;
+  department?: string;
+  isActive: boolean;
+  lastLogin: string;
+  createdAt: string;
+  confirmPassword?: string;
+}
+
+export interface Customer {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  cpf: string;
+  address: string;
   notes: string;
 }
 
-export interface DateRange {
-  from: Date;
-  to: Date; // Changed from optional to required to match usage
+export interface Product {
+  id: number;
+  code: string;
+  name: string;
+  category: string;
+  brand: string;
+  costPrice: number;
+  sellPrice: number;
+  stock: number;
+  minStock: number;
+  supplier: string;
+  location?: string;
+  lastUpdated?: string;
+}
+
+export interface StockMovement {
+  id: number;
+  productId: number;
+  date: string;
+  time: string;
+  type: "entrada" | "saída";
+  quantity: number;
+  reason: string;
+  document: string;
+  user: string;
 }

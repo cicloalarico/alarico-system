@@ -3,31 +3,28 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/components/ui/use-toast";
-import { Search, Plus, MoreHorizontal, Edit, Trash2, Eye } from "lucide-react";
+import { Search, Plus } from "lucide-react";
+import CustomersList from "@/components/customers/CustomersList";
+import CustomerForm from "@/components/customers/CustomerForm";
+import CustomerDetails from "@/components/customers/CustomerDetails";
+import { Customer } from "@/types";
 
 // Mock customer data
 const initialCustomers = [
@@ -80,50 +77,53 @@ const initialCustomers = [
 
 const Customers = () => {
   const { toast } = useToast();
-  const [customers, setCustomers] = useState(initialCustomers);
+  const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-  const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
-  const [editingCustomer, setEditingCustomer] = useState<any>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<Partial<Customer>>({});
+  const [deleteCustomerId, setDeleteCustomerId] = useState<number | null>(null);
   
-  const [newCustomer, setNewCustomer] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    cpf: "",
-    address: "",
-    notes: "",
-  });
-
   const filteredCustomers = customers.filter((customer) =>
     customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     customer.cpf.includes(searchTerm)
   );
 
-  const handleAddCustomer = () => {
-    if (!newCustomer.name || !newCustomer.email || !newCustomer.cpf) {
+  const handleFieldChange = (field: string, value: any) => {
+    setSelectedCustomer({ ...selectedCustomer, [field]: value });
+  };
+
+  const validateForm = () => {
+    if (!selectedCustomer.name || !selectedCustomer.email || !selectedCustomer.cpf) {
       toast({
         title: "Erro ao adicionar cliente",
         description: "Por favor, preencha os campos obrigatórios.",
         variant: "destructive",
       });
-      return;
+      return false;
     }
+    return true;
+  };
+
+  const handleAddCustomer = () => {
+    if (!validateForm()) return;
 
     const id = customers.length > 0 ? Math.max(...customers.map(c => c.id)) + 1 : 1;
     
-    setCustomers([...customers, { id, ...newCustomer }]);
-    setNewCustomer({
-      name: "",
-      email: "",
-      phone: "",
-      cpf: "",
-      address: "",
-      notes: "",
-    });
+    const newCustomer: Customer = {
+      id,
+      name: selectedCustomer.name!,
+      email: selectedCustomer.email!,
+      phone: selectedCustomer.phone || "",
+      cpf: selectedCustomer.cpf!,
+      address: selectedCustomer.address || "",
+      notes: selectedCustomer.notes || "",
+    };
+    
+    setCustomers([...customers, newCustomer]);
     setIsAddDialogOpen(false);
     
     toast({
@@ -133,140 +133,76 @@ const Customers = () => {
   };
 
   const handleEditCustomer = () => {
-    if (!editingCustomer.name || !editingCustomer.email || !editingCustomer.cpf) {
-      toast({
-        title: "Erro ao editar cliente",
-        description: "Por favor, preencha os campos obrigatórios.",
-        variant: "destructive",
-      });
-      return;
-    }
+    if (!validateForm()) return;
 
     setCustomers(customers.map(customer => 
-      customer.id === editingCustomer.id ? editingCustomer : customer
+      customer.id === selectedCustomer.id ? {
+        ...customer,
+        name: selectedCustomer.name!,
+        email: selectedCustomer.email!,
+        phone: selectedCustomer.phone || "",
+        cpf: selectedCustomer.cpf!,
+        address: selectedCustomer.address || "",
+        notes: selectedCustomer.notes || "",
+      } : customer
     ));
     
     setIsEditDialogOpen(false);
     
     toast({
       title: "Cliente atualizado",
-      description: `${editingCustomer.name} foi atualizado com sucesso.`,
+      description: `${selectedCustomer.name} foi atualizado com sucesso.`,
     });
   };
 
-  const handleViewCustomer = (customer: any) => {
+  const handleDeleteCustomer = () => {
+    if (deleteCustomerId) {
+      const customerToDelete = customers.find(c => c.id === deleteCustomerId);
+      setCustomers(customers.filter(c => c.id !== deleteCustomerId));
+      
+      toast({
+        title: "Cliente removido",
+        description: `${customerToDelete?.name} foi removido com sucesso.`,
+      });
+      
+      setIsDeleteDialogOpen(false);
+    }
+  };
+
+  const openAddDialog = () => {
+    setSelectedCustomer({
+      name: "",
+      email: "",
+      phone: "",
+      cpf: "",
+      address: "",
+      notes: "",
+    });
+    setIsAddDialogOpen(true);
+  };
+
+  const openEditDialog = (customer: Customer) => {
+    setSelectedCustomer({ ...customer });
+    setIsEditDialogOpen(true);
+  };
+
+  const openViewDialog = (customer: Customer) => {
     setSelectedCustomer(customer);
     setIsViewDialogOpen(true);
   };
 
-  const handleEditClick = (customer: any) => {
-    setEditingCustomer({ ...customer });
-    setIsEditDialogOpen(true);
-  };
-
-  const handleDeleteCustomer = (id: number) => {
-    const customerToDelete = customers.find((c) => c.id === id);
-    setCustomers(customers.filter((customer) => customer.id !== id));
-    
-    toast({
-      title: "Cliente removido",
-      description: `${customerToDelete?.name} foi removido com sucesso.`,
-    });
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setNewCustomer({ ...newCustomer, [name]: value });
-  };
-
-  const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setEditingCustomer({ ...editingCustomer, [name]: value });
+  const openDeleteDialog = (customerId: number) => {
+    setDeleteCustomerId(customerId);
+    setIsDeleteDialogOpen(true);
   };
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Clientes</h1>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="flex items-center gap-1">
-              <Plus size={16} /> Novo Cliente
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Adicionar Novo Cliente</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nome completo *</Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    value={newCustomer.name}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="cpf">CPF/CNPJ *</Label>
-                  <Input
-                    id="cpf"
-                    name="cpf"
-                    value={newCustomer.cpf}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">E-mail *</Label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={newCustomer.email}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Telefone</Label>
-                  <Input
-                    id="phone"
-                    name="phone"
-                    value={newCustomer.phone}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="address">Endereço</Label>
-                <Input
-                  id="address"
-                  name="address"
-                  value={newCustomer.address}
-                  onChange={handleInputChange}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="notes">Observações</Label>
-                <Textarea
-                  id="notes"
-                  name="notes"
-                  value={newCustomer.notes}
-                  onChange={handleInputChange}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                Cancelar
-              </Button>
-              <Button onClick={handleAddCustomer}>Salvar</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <Button onClick={openAddDialog} className="flex items-center gap-1">
+          <Plus size={16} /> Novo Cliente
+        </Button>
       </div>
 
       <div className="flex items-center border rounded-md px-3 py-2">
@@ -279,126 +215,49 @@ const Customers = () => {
         />
       </div>
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead>CPF/CNPJ</TableHead>
-              <TableHead className="hidden md:table-cell">E-mail</TableHead>
-              <TableHead className="hidden md:table-cell">Telefone</TableHead>
-              <TableHead className="hidden lg:table-cell">Observações</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredCustomers.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-6 text-gray-500">
-                  Nenhum cliente encontrado
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredCustomers.map((customer) => (
-                <TableRow key={customer.id}>
-                  <TableCell className="font-medium">{customer.name}</TableCell>
-                  <TableCell>{customer.cpf}</TableCell>
-                  <TableCell className="hidden md:table-cell">{customer.email}</TableCell>
-                  <TableCell className="hidden md:table-cell">{customer.phone}</TableCell>
-                  <TableCell className="hidden lg:table-cell">
-                    {customer.notes ? (
-                      <span className={customer.notes.toLowerCase().includes("inadimplente") 
-                        ? "text-red-500" 
-                        : customer.notes.toLowerCase().includes("vip") 
-                          ? "text-green-600" 
-                          : "text-gray-600"}>
-                        {customer.notes}
-                      </span>
-                    ) : (
-                      <span className="text-gray-400">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Abrir menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          className="cursor-pointer"
-                          onClick={() => handleViewCustomer(customer)}
-                        >
-                          <Eye className="mr-2 h-4 w-4" /> Visualizar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          className="cursor-pointer"
-                          onClick={() => handleEditClick(customer)}
-                        >
-                          <Edit className="mr-2 h-4 w-4" /> Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="cursor-pointer text-red-600"
-                          onClick={() => handleDeleteCustomer(customer.id)}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" /> Excluir
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      <CustomersList 
+        customers={filteredCustomers} 
+        onView={openViewDialog}
+        onEdit={openEditDialog} 
+        onDelete={openDeleteDialog}
+      />
 
-      {/* View customer dialog */}
+      {/* Dialog para adicionar cliente */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Adicionar Novo Cliente</DialogTitle>
+          </DialogHeader>
+          <CustomerForm 
+            customer={selectedCustomer}
+            onChange={handleFieldChange}
+            onSubmit={handleAddCustomer}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog para editar cliente */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar Cliente</DialogTitle>
+          </DialogHeader>
+          <CustomerForm 
+            customer={selectedCustomer}
+            onChange={handleFieldChange}
+            onSubmit={handleEditCustomer}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog para visualizar cliente */}
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Detalhes do Cliente</DialogTitle>
           </DialogHeader>
-          {selectedCustomer && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Nome</p>
-                  <p>{selectedCustomer.name}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">CPF/CNPJ</p>
-                  <p>{selectedCustomer.cpf}</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm font-medium text-gray-500">E-mail</p>
-                  <p>{selectedCustomer.email}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Telefone</p>
-                  <p>{selectedCustomer.phone}</p>
-                </div>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Endereço</p>
-                <p>{selectedCustomer.address}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Observações</p>
-                <p>{selectedCustomer.notes || "-"}</p>
-              </div>
-
-              <div className="pt-4 border-t">
-                <p className="text-sm font-medium text-gray-500 mb-2">Histórico</p>
-                <div className="bg-gray-50 p-3 rounded-md">
-                  <p className="text-sm text-gray-500">Nenhuma compra ou serviço registrado.</p>
-                </div>
-              </div>
-            </div>
+          {selectedCustomer.id && (
+            <CustomerDetails customer={selectedCustomer as Customer} />
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsViewDialogOpen(false)}>
@@ -406,7 +265,7 @@ const Customers = () => {
             </Button>
             <Button onClick={() => {
               setIsViewDialogOpen(false);
-              handleEditClick(selectedCustomer);
+              openEditDialog(selectedCustomer as Customer);
             }}>
               Editar
             </Button>
@@ -414,83 +273,23 @@ const Customers = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Edit customer dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Editar Cliente</DialogTitle>
-          </DialogHeader>
-          {editingCustomer && (
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-name">Nome completo *</Label>
-                  <Input
-                    id="edit-name"
-                    name="name"
-                    value={editingCustomer.name}
-                    onChange={handleEditInputChange}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-cpf">CPF/CNPJ *</Label>
-                  <Input
-                    id="edit-cpf"
-                    name="cpf"
-                    value={editingCustomer.cpf}
-                    onChange={handleEditInputChange}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-email">E-mail *</Label>
-                  <Input
-                    id="edit-email"
-                    name="email"
-                    type="email"
-                    value={editingCustomer.email}
-                    onChange={handleEditInputChange}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-phone">Telefone</Label>
-                  <Input
-                    id="edit-phone"
-                    name="phone"
-                    value={editingCustomer.phone}
-                    onChange={handleEditInputChange}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-address">Endereço</Label>
-                <Input
-                  id="edit-address"
-                  name="address"
-                  value={editingCustomer.address}
-                  onChange={handleEditInputChange}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-notes">Observações</Label>
-                <Textarea
-                  id="edit-notes"
-                  name="notes"
-                  value={editingCustomer.notes}
-                  onChange={handleEditInputChange}
-                />
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleEditCustomer}>Salvar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Dialog para confirmar exclusão */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteCustomer} className="bg-red-600 hover:bg-red-700">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
