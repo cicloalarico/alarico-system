@@ -15,11 +15,11 @@ import {
   Settings,
   FileText,
 } from "lucide-react";
-import useMobile from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Sidebar = ({ expanded }: { expanded: boolean }) => {
   const { pathname } = useLocation();
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
 
   // Define the navigation items
   const navItems = [

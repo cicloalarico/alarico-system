@@ -1,12 +1,12 @@
-
 import React, { useState, useEffect } from "react";
 import { format, isAfter, parseISO } from "date-fns";
+import { pt as ptBR } from "date-fns/locale";
 import { Plus, FileText, Receipt, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Bill, EmployeeSalary } from "@/types";
+import { Bill, EmployeeSalary, EmployeeAdvance, BillStatusType } from "@/types";
 import { billsData, employeeSalariesData } from "@/data/billsData";
 import { toast } from "@/hooks/use-toast";
 
@@ -58,7 +58,7 @@ const Bills: React.FC = () => {
     // Atualiza o status de contas regulares vencidas
     const updatedBills = bills.map(bill => {
       if (bill.status === "pendente" && isAfter(today, parseISO(bill.dueDate))) {
-        return { ...bill, status: "atrasado" };
+        return { ...bill, status: "atrasado" as BillStatusType };
       }
       return bill;
     });
@@ -66,7 +66,7 @@ const Bills: React.FC = () => {
     // Atualiza o status de salários vencidos
     const updatedSalaries = employeeSalaries.map(salary => {
       if (salary.status === "pendente" && isAfter(today, parseISO(salary.dueDate))) {
-        return { ...salary, status: "atrasado" };
+        return { ...salary, status: "atrasado" as BillStatusType };
       }
       return salary;
     });
@@ -82,7 +82,7 @@ const Bills: React.FC = () => {
   }, [bills, employeeSalaries]);
   
   // Cálculo de totais
-  const calculateTotals = () => {
+  function calculateTotals() {
     const totals = {
       pendentes: 0,
       atrasados: 0,
@@ -209,7 +209,7 @@ const Bills: React.FC = () => {
       // Atualizar salário
       const updatedSalary: EmployeeSalary = {
         ...employeeSalary,
-        status: "pago",
+        status: "pago" as BillStatusType,
         paymentDate: format(new Date(), "yyyy-MM-dd"),
       };
       
@@ -228,7 +228,7 @@ const Bills: React.FC = () => {
       if (bill) {
         const updatedBill: Bill = {
           ...bill,
-          status: "pago",
+          status: "pago" as BillStatusType,
           paymentDate: format(new Date(), "yyyy-MM-dd"),
         };
         
@@ -312,10 +312,19 @@ const Bills: React.FC = () => {
         ...selectedBill,
         id: `SAL${new Date().getFullYear()}${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
         description: `${selectedBill.description.split('-')[0].trim()} - ${format(nextMonth, 'MMMM/yyyy', { locale: ptBR })}`,
-        status: "pendente",
+        status: "pendente" as BillStatusType,
         dueDate: format(nextMonth, 'yyyy-MM-dd'),
         paymentDate: undefined,
         parentBillId: selectedBill.id,
+        // Garantindo que todos os campos necessários de EmployeeSalary sejam incluídos
+        employeeId: selectedBill.employeeId,
+        employeeName: selectedBill.employeeName,
+        baseSalary: selectedBill.baseSalary,
+        commission: selectedBill.commission,
+        salesTarget: selectedBill.salesTarget,
+        advances: [...selectedBill.advances], // Clonando o array de adiantamentos
+        totalAdvances: selectedBill.totalAdvances,
+        netSalary: selectedBill.netSalary
       };
       
       setEmployeeSalaries([newEmployeeSalary, ...employeeSalaries]);
@@ -327,7 +336,7 @@ const Bills: React.FC = () => {
       const newBill: Bill = {
         ...selectedBill,
         id: `B${new Date().getFullYear()}${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
-        status: "pendente",
+        status: "pendente" as BillStatusType,
         dueDate: format(nextMonth, 'yyyy-MM-dd'),
         paymentDate: undefined,
         parentBillId: selectedBill.id,
@@ -420,8 +429,6 @@ const Bills: React.FC = () => {
           </CardContent>
         </Card>
       </div>
-
-      <Separator />
 
       {/* Detalhamento das contas por categoria */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
