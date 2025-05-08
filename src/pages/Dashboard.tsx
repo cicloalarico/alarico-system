@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   Users, 
   ShoppingCart, 
-  Tool, 
+  Wrench, 
   Package, 
   AlertTriangle, 
   TrendingUp,

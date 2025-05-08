@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -57,7 +56,7 @@ import {
   Printer,
   ArrowRight,
   Package,
-  Tool,
+  Wrench,
   X
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -474,7 +473,7 @@ const ServiceOrders = () => {
 
               <div className="border-t pt-4">
                 <h3 className="font-medium mb-4 flex items-center">
-                  <Tool className="h-5 w-5 mr-2" />
+                  <Wrench className="h-5 w-5 mr-2" />
                   Serviços
                 </h3>
 
@@ -873,64 +872,4 @@ const ServiceOrders = () => {
           </div>
         </CardHeader>
         <CardContent className="pt-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <div className="flex items-center text-sm">
-                <Bike className="h-4 w-4 mr-2 text-gray-500" />
-                <span className="text-gray-700">{order.bikeModel}</span>
-              </div>
-              <div className="flex items-center text-sm">
-                <Calendar className="h-4 w-4 mr-2 text-gray-500" />
-                <span className="text-gray-700">Agendado para: {order.scheduledFor}</span>
-              </div>
-              <div className="flex items-center text-sm">
-                <Clock className="h-4 w-4 mr-2 text-gray-500" />
-                <span className="text-gray-700">Aberto em: {order.createdAt}</span>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="text-sm text-gray-700">
-                <span className="font-medium">Problema relatado:</span> {order.issueDescription}
-              </div>
-              <div className="flex items-center justify-between mt-2">
-                <div className="flex items-center text-sm">
-                  {order.status === "Em andamento" && (
-                    <div className="flex items-center text-amber-600">
-                      <ClockIcon className="h-4 w-4 mr-1" />
-                      <span>Em andamento</span>
-                    </div>
-                  )}
-                  {order.status === "Concluído" && (
-                    <div className="flex items-center text-green-600">
-                      <CheckCircle className="h-4 w-4 mr-1" />
-                      <span>Concluído</span>
-                    </div>
-                  )}
-                </div>
-                <div className="font-semibold">
-                  R$ {order.totalPrice.toFixed(2)}
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-        <CardFooter className="bg-gray-50 flex justify-between">
-          <div className="text-sm text-gray-500">
-            {order.technician ? `Técnico: ${order.technician}` : "Técnico não definido"}
-          </div>
-          <Button 
-            variant="ghost" 
-            size="sm"
-            className="text-primary flex items-center"
-            onClick={() => handleViewServiceOrder(order)}
-          >
-            Detalhes
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-        </CardFooter>
-      </Card>
-    ));
-  }
-};
-
-export default ServiceOrders;
+          <div className="grid grid-cols-1 md:grid-cols-2
