@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,14 +66,16 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
     technicianId: "",
     scheduledFor: new Date().toISOString().split("T")[0],
     notes: "",
-    services: [] as Service[],
-    products: [] as (Product & { subtotal: number })[],
+    services: [] as (Service & { customPrice?: number })[],
+    products: [] as (Product & { quantity: number, subtotal: number })[],
   });
   
   // Estado para campos temporários
   const [selectedService, setSelectedService] = useState("");
   const [selectedProduct, setSelectedProduct] = useState("");
+  const [serviceCustomPrice, setServiceCustomPrice] = useState<number | undefined>(undefined);
   const [productQuantity, setProductQuantity] = useState(1);
+  const [productCustomPrice, setProductCustomPrice] = useState<number | undefined>(undefined);
 
   // Handlers para campos de formulário
   function handleChange(field: string, value: string) {
@@ -85,12 +88,16 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
     
     const service = serviceOptions.find(s => s.name === selectedService);
     if (service) {
-      const newServices = [...formData.services, { ...service }];
+      const newServices = [...formData.services, { 
+        ...service,
+        customPrice: serviceCustomPrice !== undefined ? serviceCustomPrice : service.price
+      }];
       setFormData({
         ...formData,
         services: newServices,
       });
       setSelectedService("");
+      setServiceCustomPrice(undefined);
     }
   }
 
@@ -100,10 +107,12 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
     
     const product = productOptions.find(p => p.name === selectedProduct);
     if (product) {
+      const price = productCustomPrice !== undefined ? productCustomPrice : product.price;
       const newProducts = [...formData.products, { 
         ...product, 
+        price: price,
         quantity: productQuantity,
-        subtotal: product.price * productQuantity
+        subtotal: price * productQuantity
       }];
       setFormData({
         ...formData,
@@ -111,7 +120,61 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
       });
       setSelectedProduct("");
       setProductQuantity(1);
+      setProductCustomPrice(undefined);
     }
+  }
+
+  // Atualizar preço de serviço
+  function handleUpdateServicePrice(id: string | number, newPrice: number) {
+    const updatedServices = formData.services.map(service => {
+      if (service.id === id) {
+        return { ...service, customPrice: newPrice };
+      }
+      return service;
+    });
+    
+    setFormData({
+      ...formData,
+      services: updatedServices,
+    });
+  }
+
+  // Atualizar preço de produto
+  function handleUpdateProductPrice(id: number, newPrice: number) {
+    const updatedProducts = formData.products.map(product => {
+      if (product.id === id) {
+        return { 
+          ...product, 
+          price: newPrice,
+          subtotal: newPrice * product.quantity
+        };
+      }
+      return product;
+    });
+    
+    setFormData({
+      ...formData,
+      products: updatedProducts,
+    });
+  }
+
+  // Atualizar quantidade de produto
+  function handleUpdateProductQuantity(id: number, newQuantity: number) {
+    const updatedProducts = formData.products.map(product => {
+      if (product.id === id) {
+        return { 
+          ...product, 
+          quantity: newQuantity,
+          subtotal: product.price * newQuantity
+        };
+      }
+      return product;
+    });
+    
+    setFormData({
+      ...formData,
+      products: updatedProducts,
+    });
   }
 
   // Remover serviço
@@ -133,7 +196,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
   // Calcular total
   function calculateTotal() {
     let servicesTotal = formData.services.reduce(
-      (sum, service) => sum + service.price,
+      (sum, service) => sum + (service.customPrice !== undefined ? service.customPrice : service.price),
       0
     );
     let productsTotal = formData.products.reduce(
@@ -266,14 +329,21 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
           <div className="border-t pt-4">
             <h3 className="font-medium mb-4">Serviços</h3>
 
-            <div className="flex items-end gap-2 mb-4">
-              <div className="flex-1">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div className="md:col-span-2">
                 <Label htmlFor="service" className="mb-2 block">
                   Adicionar Serviço
                 </Label>
                 <Select
                   value={selectedService}
-                  onValueChange={setSelectedService}
+                  onValueChange={(value) => {
+                    setSelectedService(value);
+                    // Pré-preencher com o preço padrão do serviço selecionado
+                    const service = serviceOptions.find(s => s.name === value);
+                    if (service) {
+                      setServiceCustomPrice(service.price);
+                    }
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione um serviço" />
@@ -281,15 +351,30 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
                   <SelectContent>
                     {serviceOptions.map((service) => (
                       <SelectItem key={service.id} value={service.name}>
-                        {service.name} - R$ {service.price.toFixed(2)}
+                        {service.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-              <Button type="button" onClick={handleAddService}>
-                Adicionar
-              </Button>
+              <div className="flex gap-2 items-end">
+                <div className="flex-1">
+                  <Label htmlFor="servicePrice" className="mb-2 block">
+                    Valor (R$)
+                  </Label>
+                  <Input
+                    id="servicePrice"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={serviceCustomPrice === undefined ? "" : serviceCustomPrice}
+                    onChange={(e) => setServiceCustomPrice(parseFloat(e.target.value) || 0)}
+                  />
+                </div>
+                <Button type="button" onClick={handleAddService} className="whitespace-nowrap">
+                  Adicionar
+                </Button>
+              </div>
             </div>
 
             {formData.services.length > 0 ? (
@@ -298,7 +383,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
                   <TableHeader>
                     <TableRow>
                       <TableHead>Serviço</TableHead>
-                      <TableHead className="text-right">Valor</TableHead>
+                      <TableHead className="text-right">Valor (R$)</TableHead>
                       <TableHead className="w-10"></TableHead>
                     </TableRow>
                   </TableHeader>
@@ -307,7 +392,14 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
                       <TableRow key={service.id}>
                         <TableCell>{service.name}</TableCell>
                         <TableCell className="text-right">
-                          R$ {service.price.toFixed(2)}
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={service.customPrice !== undefined ? service.customPrice : service.price}
+                            onChange={(e) => handleUpdateServicePrice(service.id, parseFloat(e.target.value) || 0)}
+                            className="w-24 inline-block text-right"
+                          />
                         </TableCell>
                         <TableCell>
                           <Button
@@ -334,14 +426,21 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
           <div className="border-t pt-4">
             <h3 className="font-medium mb-4">Peças e Produtos</h3>
 
-            <div className="flex items-end gap-2 mb-4">
-              <div className="flex-1">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
+              <div className="md:col-span-2">
                 <Label htmlFor="product" className="mb-2 block">
                   Adicionar Produto
                 </Label>
                 <Select
                   value={selectedProduct}
-                  onValueChange={setSelectedProduct}
+                  onValueChange={(value) => {
+                    setSelectedProduct(value);
+                    // Pré-preencher com o preço padrão do produto selecionado
+                    const product = productOptions.find(p => p.name === value);
+                    if (product) {
+                      setProductCustomPrice(product.price);
+                    }
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione um produto" />
@@ -349,13 +448,13 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
                   <SelectContent>
                     {productOptions.map((product) => (
                       <SelectItem key={product.id} value={product.name}>
-                        {product.name} - R$ {product.price.toFixed(2)} {product.stock && `(Estoque: ${product.stock})`}
+                        {product.name} {product.stock && `(Estoque: ${product.stock})`}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-              <div className="w-24">
+              <div>
                 <Label htmlFor="quantity" className="mb-2 block">
                   Qtd
                 </Label>
@@ -367,9 +466,24 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
                   onChange={(e) => setProductQuantity(parseInt(e.target.value) || 1)}
                 />
               </div>
-              <Button type="button" onClick={handleAddProduct}>
-                Adicionar
-              </Button>
+              <div>
+                <Label htmlFor="productPrice" className="mb-2 block">
+                  Valor (R$)
+                </Label>
+                <Input
+                  id="productPrice"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={productCustomPrice === undefined ? "" : productCustomPrice}
+                  onChange={(e) => setProductCustomPrice(parseFloat(e.target.value) || 0)}
+                />
+              </div>
+              <div className="flex items-end">
+                <Button type="button" onClick={handleAddProduct} className="w-full">
+                  Adicionar
+                </Button>
+              </div>
             </div>
 
             {formData.products.length > 0 ? (
@@ -379,8 +493,8 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
                     <TableRow>
                       <TableHead>Produto</TableHead>
                       <TableHead className="w-20 text-center">Qtd</TableHead>
-                      <TableHead className="text-right">Valor Unit.</TableHead>
-                      <TableHead className="text-right">Total</TableHead>
+                      <TableHead className="text-right">Valor Unit. (R$)</TableHead>
+                      <TableHead className="text-right">Total (R$)</TableHead>
                       <TableHead className="w-10"></TableHead>
                     </TableRow>
                   </TableHeader>
@@ -389,13 +503,26 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
                       <TableRow key={product.id}>
                         <TableCell>{product.name}</TableCell>
                         <TableCell className="text-center">
-                          {product.quantity}
+                          <Input
+                            type="number"
+                            min="1"
+                            value={product.quantity}
+                            onChange={(e) => handleUpdateProductQuantity(product.id, parseInt(e.target.value) || 1)}
+                            className="w-16 inline-block text-center"
+                          />
                         </TableCell>
                         <TableCell className="text-right">
-                          R$ {product.price.toFixed(2)}
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={product.price}
+                            onChange={(e) => handleUpdateProductPrice(product.id, parseFloat(e.target.value) || 0)}
+                            className="w-24 inline-block text-right"
+                          />
                         </TableCell>
                         <TableCell className="text-right font-medium">
-                          R$ {product.subtotal.toFixed(2)}
+                          {product.subtotal.toFixed(2)}
                         </TableCell>
                         <TableCell>
                           <Button

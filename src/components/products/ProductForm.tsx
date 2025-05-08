@@ -25,6 +25,20 @@ const ProductForm: React.FC<ProductFormProps> = ({
   onSubmit,
   categories
 }) => {
+  // Calcular a margem de lucro quando o preço mínimo ou custo mudar
+  const calculateProfitMargin = () => {
+    if (!product.minSellPrice || !product.costPrice || product.costPrice === 0) return 0;
+    return ((product.minSellPrice - product.costPrice) / product.costPrice) * 100;
+  };
+
+  // Atualizar o preço mínimo quando a margem de lucro mudar
+  const handleMarginChange = (margin: number) => {
+    if (!product.costPrice) return;
+    const minSellPrice = product.costPrice * (1 + margin / 100);
+    onChange("minSellPrice", minSellPrice);
+    onChange("profitMargin", margin);
+  };
+
   return (
     <form onSubmit={(e) => {
       e.preventDefault();
@@ -93,7 +107,14 @@ const ProductForm: React.FC<ProductFormProps> = ({
             step="0.01"
             min="0"
             value={product.costPrice || 0}
-            onChange={(e) => onChange("costPrice", parseFloat(e.target.value) || 0)}
+            onChange={(e) => {
+              const value = parseFloat(e.target.value) || 0;
+              onChange("costPrice", value);
+              // Recalculate minSellPrice based on the current profit margin
+              if (product.profitMargin) {
+                onChange("minSellPrice", value * (1 + product.profitMargin / 100));
+              }
+            }}
           />
         </div>
         <div className="space-y-2">
@@ -106,6 +127,40 @@ const ProductForm: React.FC<ProductFormProps> = ({
             min="0"
             value={product.sellPrice || 0}
             onChange={(e) => onChange("sellPrice", parseFloat(e.target.value) || 0)}
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="minSellPrice">Preço Mínimo de Venda (R$)</Label>
+          <Input
+            id="minSellPrice"
+            name="minSellPrice"
+            type="number"
+            step="0.01"
+            min="0"
+            value={product.minSellPrice || 0}
+            onChange={(e) => {
+              const value = parseFloat(e.target.value) || 0;
+              onChange("minSellPrice", value);
+              // Recalcular a margem de lucro quando o preço mínimo mudar
+              if (product.costPrice && product.costPrice > 0) {
+                onChange("profitMargin", ((value - product.costPrice) / product.costPrice) * 100);
+              }
+            }}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="profitMargin">Margem de Lucro (%)</Label>
+          <Input
+            id="profitMargin"
+            name="profitMargin"
+            type="number"
+            step="0.1"
+            min="0"
+            value={product.profitMargin || 0}
+            onChange={(e) => handleMarginChange(parseFloat(e.target.value) || 0)}
           />
         </div>
       </div>

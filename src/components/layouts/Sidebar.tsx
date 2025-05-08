@@ -92,14 +92,14 @@ const Sidebar = ({ expanded }: { expanded: boolean }) => {
   return (
     <div
       className={cn(
-        "hidden md:flex flex-col border-r transition-all duration-300",
+        "hidden md:flex flex-col border-r transition-all duration-300 bg-shop-primary text-white",
         expanded ? "w-56" : "w-16"
       )}
     >
-      <div className="p-4 h-16 flex items-center border-b">
+      <div className="p-4 h-16 flex items-center border-b border-shop-dark">
         <h1
           className={cn(
-            "font-bold overflow-hidden transition-all duration-300",
+            "font-bold overflow-hidden transition-all duration-300 text-white",
             expanded ? "w-56 opacity-100" : "w-0 opacity-0"
           )}
         >
@@ -124,10 +124,10 @@ const Sidebar = ({ expanded }: { expanded: boolean }) => {
                 key={item.href}
                 to={item.href}
                 className={cn(
-                  "flex items-center py-2 px-3 rounded-lg text-sm font-medium hover:bg-slate-100",
+                  "flex items-center py-2 px-3 rounded-lg text-sm font-medium hover:bg-shop-dark",
                   isActive
-                    ? "bg-slate-100 text-slate-900"
-                    : "text-slate-600 hover:text-slate-900"
+                    ? "bg-shop-dark text-white"
+                    : "text-white hover:text-white"
                 )}
               >
                 <item.icon className={cn("h-5 w-5")} />

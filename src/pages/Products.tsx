@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +28,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Search, Plus, Edit, AlertTriangle } from "lucide-react";
+import ProductForm from "@/components/products/ProductForm";
 
 // Mock product data
 const initialProducts = [
@@ -38,6 +40,8 @@ const initialProducts = [
     brand: "Trek",
     costPrice: 1200.00,
     sellPrice: 1899.90,
+    minSellPrice: 1500.00,
+    profitMargin: 25.0,
     stock: 5,
     minStock: 2,
     supplier: "Trek Brasil",
@@ -50,6 +54,8 @@ const initialProducts = [
     brand: "Shimano",
     costPrice: 89.90,
     sellPrice: 139.90,
+    minSellPrice: 110.00,
+    profitMargin: 22.4,
     stock: 15,
     minStock: 5,
     supplier: "Shimano Brasil",
@@ -62,6 +68,8 @@ const initialProducts = [
     brand: "Michelin",
     costPrice: 79.90,
     sellPrice: 129.90,
+    minSellPrice: 100.00,
+    profitMargin: 25.2,
     stock: 8,
     minStock: 10,
     supplier: "Michelin Importadora",
@@ -74,6 +82,8 @@ const initialProducts = [
     brand: "Specialized",
     costPrice: 150.00,
     sellPrice: 249.90,
+    minSellPrice: 190.00,
+    profitMargin: 26.7,
     stock: 12,
     minStock: 5,
     supplier: "Specialized Brasil",
@@ -86,6 +96,8 @@ const initialProducts = [
     brand: "WD-40 Bike",
     costPrice: 25.00,
     sellPrice: 39.90,
+    minSellPrice: 32.00,
+    profitMargin: 28.0,
     stock: 3,
     minStock: 15,
     supplier: "WD-40 Brasil",
@@ -115,6 +127,8 @@ const Products = () => {
     brand: "",
     costPrice: 0,
     sellPrice: 0,
+    minSellPrice: 0,
+    profitMargin: 0,
     stock: 0,
     minStock: 0,
     supplier: "",
@@ -125,7 +139,7 @@ const Products = () => {
                           product.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           product.brand.toLowerCase().includes(searchTerm.toLowerCase());
     
-    if (categoryFilter) {
+    if (categoryFilter && categoryFilter !== "all") {
       return matchesSearch && product.category === categoryFilter;
     }
     
@@ -152,6 +166,8 @@ const Products = () => {
       brand: "",
       costPrice: 0,
       sellPrice: 0,
+      minSellPrice: 0,
+      profitMargin: 0,
       stock: 0,
       minStock: 0,
       supplier: "",
@@ -164,14 +180,8 @@ const Products = () => {
     });
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setNewProduct({ 
-      ...newProduct, 
-      [name]: name === "costPrice" || name === "sellPrice" || name === "stock" || name === "minStock"
-        ? parseFloat(value) || 0
-        : value
-    });
+  const handleInputChange = (field: string, value: any) => {
+    setNewProduct({ ...newProduct, [field]: value });
   };
 
   return (
@@ -188,126 +198,12 @@ const Products = () => {
             <DialogHeader>
               <DialogTitle>Adicionar Novo Produto</DialogTitle>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="code">Código *</Label>
-                  <Input
-                    id="code"
-                    name="code"
-                    value={newProduct.code}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div className="space-y-2 col-span-2">
-                  <Label htmlFor="name">Nome *</Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    value={newProduct.name}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="category">Categoria *</Label>
-                  <Select 
-                    value={newProduct.category} 
-                    onValueChange={(value) => setNewProduct({...newProduct, category: value})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((category) => (
-                        <SelectItem key={category} value={category}>
-                          {category}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="brand">Marca</Label>
-                  <Input
-                    id="brand"
-                    name="brand"
-                    value={newProduct.brand}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="costPrice">Preço de Custo (R$)</Label>
-                  <Input
-                    id="costPrice"
-                    name="costPrice"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={newProduct.costPrice}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="sellPrice">Preço de Venda (R$)</Label>
-                  <Input
-                    id="sellPrice"
-                    name="sellPrice"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={newProduct.sellPrice}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="stock">Estoque Atual</Label>
-                  <Input
-                    id="stock"
-                    name="stock"
-                    type="number"
-                    min="0"
-                    value={newProduct.stock}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="minStock">Estoque Mínimo</Label>
-                  <Input
-                    id="minStock"
-                    name="minStock"
-                    type="number"
-                    min="0"
-                    value={newProduct.minStock}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="supplier">Fornecedor</Label>
-                <Input
-                  id="supplier"
-                  name="supplier"
-                  value={newProduct.supplier}
-                  onChange={handleInputChange}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                Cancelar
-              </Button>
-              <Button onClick={handleAddProduct}>Salvar</Button>
-            </DialogFooter>
+            <ProductForm 
+              product={newProduct}
+              onChange={handleInputChange}
+              onSubmit={handleAddProduct}
+              categories={categories}
+            />
           </DialogContent>
         </Dialog>
       </div>
