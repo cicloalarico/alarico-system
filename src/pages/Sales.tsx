@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -713,7 +712,14 @@ const Sales = () => {
                   mode="range"
                   defaultMonth={dateRange.from}
                   selected={dateRange}
-                  onSelect={setDateRange}
+                  onSelect={(range) => {
+                    if (range) {
+                      setDateRange({
+                        from: range.from,
+                        to: range.to || range.from,
+                      });
+                    }
+                  }}
                   numberOfMonths={2}
                 />
                 <div className="p-3 border-t border-gray-100 flex justify-between">
