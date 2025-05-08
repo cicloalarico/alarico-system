@@ -139,6 +139,8 @@ export interface ServiceOrderProduct {
   brand?: string;
   costPrice?: number;
   sellPrice?: number;
+  minSellPrice?: number; // Added the missing property
+  profitMargin?: number; // Added the missing property
   minStock?: number;
   supplier?: string;
   location?: string;
