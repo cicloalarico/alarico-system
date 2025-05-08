@@ -1,4 +1,3 @@
-
 import React from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -10,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { FilePrinter } from "lucide-react";
+import { Printer } from "lucide-react";
 import { Sale } from "@/types";
 import { Badge } from "@/components/ui/badge";
 
@@ -41,7 +40,7 @@ const SaleDetails: React.FC<SaleDetailsProps> = ({ isOpen, onClose, sale }) => {
           <div className="flex justify-between items-center">
             <DialogTitle>Detalhes da Venda</DialogTitle>
             <Button variant="outline" size="sm" onClick={handlePrint}>
-              <FilePrinter className="mr-2 h-4 w-4" />
+              <Printer className="mr-2 h-4 w-4" />
               Imprimir
             </Button>
           </div>

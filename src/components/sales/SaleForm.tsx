@@ -74,7 +74,24 @@ const SaleForm: React.FC<SaleFormProps> = ({
   onSave,
   initialData,
 }) => {
-  const [productData, setProductData] = useState<Product[]>(productOptions);
+  // Convert the productOptions to fully conform to the Product type
+  const [productData, setProductData] = useState<Product[]>(
+    productOptions.map(product => ({
+      id: product.id,
+      code: product.code || `PROD-${product.id}`, // Provide default code if missing
+      name: product.name,
+      category: product.category || "",
+      brand: product.brand || "",
+      costPrice: product.costPrice || product.price || 0,
+      sellPrice: product.price || 0,
+      stock: product.stock || 0,
+      minStock: product.minStock || 0,
+      supplier: product.supplier || "",
+      price: product.price,
+      quantity: product.quantity
+    }))
+  );
+  
   const [customers, setCustomers] = useState<Customer[]>(
     customerOptions.map((c) => ({ id: c.id, name: c.name, email: "", phone: "", cpf: "", address: "", notes: "" }))
   );
