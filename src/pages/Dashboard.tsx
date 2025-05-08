@@ -8,7 +8,8 @@ import {
   Package, 
   AlertTriangle, 
   TrendingUp,
-  Calendar
+  Calendar,
+  Bike
 } from "lucide-react";
 import { 
   BarChart,
@@ -43,7 +44,7 @@ const Dashboard = () => {
     { name: "Outros", value: 5 },
   ];
 
-  const COLORS = ["#2e7d32", "#1565c0", "#43a047", "#4caf50", "#81c784"];
+  const COLORS = ["#FF6B00", "#FF8A30", "#FFA559", "#FFBB80", "#FFD6B0"];
 
   const upcomingServices = [
     { id: 1, customer: "João Silva", service: "Revisão completa", date: "Hoje" },
@@ -59,7 +60,16 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Dashboard</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <div className="flex items-center">
+          <img 
+            src="/lovable-uploads/5d69e1f9-27a3-4d17-b3f0-f81f3177fc9f.png" 
+            alt="Ciclo Alarico" 
+            className="h-10"
+          />
+        </div>
+      </div>
 
       {/* Stats overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -89,8 +99,8 @@ const Dashboard = () => {
         
         <Card>
           <CardContent className="flex items-center p-6">
-            <div className="bg-green-100 p-3 rounded-full mr-4">
-              <Users size={24} className="text-green-600" />
+            <div className="bg-shop-accent/10 p-3 rounded-full mr-4">
+              <Users size={24} className="text-shop-accent" />
             </div>
             <div>
               <p className="text-sm font-medium text-gray-500">Novos Clientes</p>
@@ -128,7 +138,7 @@ const Dashboard = () => {
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip formatter={(value) => [`R$ ${value}`, "Valor"]} />
-                <Bar dataKey="value" fill="#2e7d32" />
+                <Bar dataKey="value" fill="#FF6B00" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -171,7 +181,7 @@ const Dashboard = () => {
               <Calendar className="mr-2 h-5 w-5" />
               Próximos Serviços
             </CardTitle>
-            <a href="/services" className="text-sm text-primary hover:underline">
+            <a href="/services" className="text-sm text-shop-primary hover:underline">
               Ver todos
             </a>
           </CardHeader>
@@ -180,7 +190,7 @@ const Dashboard = () => {
               {upcomingServices.map((service) => (
                 <div
                   key={service.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-md"
+                  className="flex items-center justify-between p-3 bg-shop-light rounded-md"
                 >
                   <div>
                     <p className="font-medium">{service.customer}</p>
@@ -201,7 +211,7 @@ const Dashboard = () => {
               <AlertTriangle className="mr-2 h-5 w-5" />
               Itens com Estoque Baixo
             </CardTitle>
-            <a href="/inventory" className="text-sm text-primary hover:underline">
+            <a href="/inventory" className="text-sm text-shop-primary hover:underline">
               Ver todos
             </a>
           </CardHeader>
@@ -210,7 +220,7 @@ const Dashboard = () => {
               {lowStockItems.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-md"
+                  className="flex items-center justify-between p-3 bg-shop-light rounded-md"
                 >
                   <div>
                     <p className="font-medium">{item.name}</p>

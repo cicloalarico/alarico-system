@@ -63,14 +63,14 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Bicycle shop custom colors
+				// Ciclo Alarico custom colors
 				shop: {
-					primary: '#2e7d32', // Forest green
-					secondary: '#1565c0', // Deep blue
-					accent: '#43a047', // Vibrant green
-					light: '#e8f5e9', // Light green background
-					dark: '#1b5e20', // Dark green
-					gray: '#eceff1', // Light gray background
+					primary: '#FF6B00', // Laranja principal
+					secondary: '#FF8A30', // Laranja secundário
+					accent: '#FFA559', // Laranja claro
+					light: '#FFF3E6', // Fundo laranja claro
+					dark: '#BF5000', // Laranja escuro
+					gray: '#F7F7F7', // Cinza claro
 				}
 			},
 			borderRadius: {
