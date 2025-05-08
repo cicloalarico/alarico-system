@@ -214,13 +214,17 @@ const ServiceOrders = () => {
   // Manipular criação de uma nova ordem de serviço
   const handleCreateServiceOrder = (data: any) => {
     const orderCount = serviceOrders.length;
+    
+    // Explicitly cast the priority to the correct type
+    const priority = data.priority as "Baixa" | "Normal" | "Alta" | "Urgente";
+    
     const newOrder = {
       id: `OS2024${String(orderCount + 1).padStart(3, "0")}`,
       customer: data.customer,
       bikeModel: data.bikeModel,
       issueDescription: data.issueDescription,
       status: "Aberta" as ServiceStatusType,
-      priority: data.priority as "Baixa" | "Normal" | "Alta" | "Urgente",
+      priority: priority, // Use the explicitly cast variable
       createdAt: new Date().toISOString().split("T")[0],
       scheduledFor: data.scheduledFor,
       completedAt: null,
