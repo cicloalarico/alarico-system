@@ -84,6 +84,8 @@ const SaleForm: React.FC<SaleFormProps> = ({
       brand: product.brand || "",
       costPrice: product.costPrice || product.price || 0,
       sellPrice: product.price || 0,
+      minSellPrice: product.minSellPrice || product.price || 0, // Add the missing property
+      profitMargin: product.profitMargin || 0, // Add the missing property
       stock: product.stock || 0,
       minStock: product.minStock || 0,
       supplier: product.supplier || "",
