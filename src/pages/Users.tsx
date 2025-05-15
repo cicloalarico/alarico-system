@@ -168,7 +168,7 @@ const Users = () => {
         <UsersList
           users={filteredUsers}
           onEdit={openEditDialog}
-          onDelete={openDeleteDialog}
+          onDelete={(userId) => openDeleteDialog(users.find(u => u.id === userId) || users[0])}
           onToggleActive={handleToggleUserActive}
         />
       )}
