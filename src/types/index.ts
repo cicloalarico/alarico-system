@@ -1,6 +1,7 @@
+
 export type PriorityType = 'Baixa' | 'Normal' | 'Alta' | 'Urgente';
 export type ServiceStatusType = 'Aberta' | 'Em andamento' | 'Aguardando peças' | 'Concluída' | 'Entregue' | 'Cancelada' | 'Aguardando';
-export type PaymentMethodType = 'Dinheiro' | 'PIX' | 'Cartão de Crédito' | 'Cartão de Débito' | 'Crediário Loja';
+export type PaymentMethodType = 'Dinheiro' | 'PIX' | 'Cartão de Crédito' | 'Cartão de Débito' | 'Crediário Loja' | 'Transferência' | 'Boleto';
 
 export interface ServiceOrder {
   id: string;
@@ -122,7 +123,6 @@ export interface SaleItem {
   subtotal: number;
 }
 
-export type PaymentMethodType = 'Dinheiro' | 'Cartão de Crédito' | 'Cartão de Débito' | 'PIX' | 'Transferência' | 'Boleto';
 export type SaleStatusType = 'Concluída' | 'Cancelada' | 'Pendente';
 
 // Novos tipos para Financeiro (Financial)
