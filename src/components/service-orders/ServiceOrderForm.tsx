@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,9 +25,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { X } from "lucide-react";
-import { ServiceItem, ProductItem } from "@/types";
+import { X, CalendarIcon } from "lucide-react";
+import { ServiceItem, ProductItem, PaymentMethodType } from "@/types";
 import { ServiceOrderProduct } from "@/data/serviceOrdersData";
+import { format, addMonths } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 
 // Tipos para o formulário de ordem de serviço
 export interface Service extends ServiceItem {}
@@ -67,7 +76,12 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
     notes: "",
     services: [] as (Service & { customPrice?: number })[],
     products: [] as (Product & { quantity: number, subtotal: number })[],
-    laborValue: 0, // Novo campo para valor de mão de obra
+    laborValue: 0,
+    paymentMethod: "Dinheiro" as PaymentMethodType,
+    downPayment: 0,
+    installments: 1,
+    installmentAmount: 0,
+    firstInstallmentDate: new Date().toISOString().split("T")[0],
   });
   
   // Estado para campos temporários
@@ -76,6 +90,21 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
   const [serviceCustomPrice, setServiceCustomPrice] = useState<number | undefined>(undefined);
   const [productQuantity, setProductQuantity] = useState(1);
   const [productCustomPrice, setProductCustomPrice] = useState<number | undefined>(undefined);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+
+  // Calcular valor da parcela quando dados relevantes mudam
+  useEffect(() => {
+    if (formData.paymentMethod === "Crediário Loja" && formData.installments > 0) {
+      const total = calculateTotal();
+      const remainingValue = total - (formData.downPayment || 0);
+      const installmentValue = remainingValue / formData.installments;
+      
+      setFormData({
+        ...formData,
+        installmentAmount: installmentValue > 0 ? installmentValue : 0
+      });
+    }
+  }, [formData.downPayment, formData.installments, formData.services, formData.products, formData.laborValue, formData.paymentMethod]);
 
   // Handlers para campos de formulário
   function handleChange(field: string, value: string | number) {
@@ -207,15 +236,30 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
     return servicesTotal + productsTotal + (formData.laborValue || 0);
   }
   
+  // Gerar as datas das parcelas
+  function generateInstallmentDates() {
+    const dates = [];
+    if (selectedDate && formData.installments > 0) {
+      for (let i = 0; i < formData.installments; i++) {
+        dates.push(format(addMonths(selectedDate, i), 'dd/MM/yyyy', { locale: ptBR }));
+      }
+    }
+    return dates;
+  }
+  
   // Enviar formulário
   function handleSubmit() {
     if (!formData.customer || !formData.bikeModel || !formData.issueDescription) {
       return;
     }
 
+    const totalPrice = calculateTotal();
+    const firstInstallmentDate = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : undefined;
+
     onSubmit({
       ...formData,
-      totalPrice: calculateTotal()
+      totalPrice,
+      firstInstallmentDate,
     });
     
     // Reset form
@@ -230,8 +274,26 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
       services: [],
       products: [],
       laborValue: 0,
+      paymentMethod: "Dinheiro",
+      downPayment: 0,
+      installments: 1,
+      installmentAmount: 0,
+      firstInstallmentDate: new Date().toISOString().split("T")[0],
     });
+    setSelectedDate(new Date());
   };
+
+  // Lista de métodos de pagamento
+  const paymentMethods: {value: PaymentMethodType, label: string}[] = [
+    { value: "Dinheiro", label: "À Vista: Dinheiro" },
+    { value: "PIX", label: "À Vista: PIX" },
+    { value: "Cartão de Débito", label: "Cartão de Débito" },
+    { value: "Cartão de Crédito", label: "Cartão de Crédito" },
+    { value: "Crediário Loja", label: "Crediário Loja" },
+  ];
+
+  // Datas de parcelas
+  const installmentDates = generateInstallmentDates();
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -576,6 +638,115 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
               <span>Total:</span>
               <span>R$ {calculateTotal().toFixed(2)}</span>
             </div>
+          </div>
+
+          {/* Nova seção de forma de pagamento */}
+          <div className="border-t pt-4 space-y-4">
+            <h3 className="font-medium">Forma de Pagamento</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="paymentMethod">Método de Pagamento</Label>
+                <Select
+                  value={formData.paymentMethod}
+                  onValueChange={(value: PaymentMethodType) => handleChange("paymentMethod", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a forma de pagamento" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {paymentMethods.map((method) => (
+                      <SelectItem key={method.value} value={method.value}>
+                        {method.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Campos adicionais para crediário */}
+            {formData.paymentMethod === "Crediário Loja" && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="downPayment">Valor da Entrada (R$)</Label>
+                    <Input
+                      id="downPayment"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.downPayment}
+                      onChange={(e) => handleChange("downPayment", parseFloat(e.target.value) || 0)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="installments">Quantidade de Parcelas</Label>
+                    <Input
+                      id="installments"
+                      type="number"
+                      min="1"
+                      max="12"
+                      value={formData.installments}
+                      onChange={(e) => handleChange("installments", parseInt(e.target.value) || 1)}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="installmentValue">Valor da Parcela (R$)</Label>
+                    <Input
+                      id="installmentValue"
+                      type="number"
+                      step="0.01"
+                      value={formData.installmentAmount.toFixed(2)}
+                      disabled
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Data da Primeira Parcela</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start text-left font-normal"
+                        >
+                          {selectedDate ? (
+                            format(selectedDate, 'dd/MM/yyyy', { locale: ptBR })
+                          ) : (
+                            <span>Selecione uma data</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={selectedDate}
+                          onSelect={setSelectedDate}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </div>
+
+                {/* Exibir as datas das parcelas */}
+                {installmentDates.length > 0 && (
+                  <div className="space-y-2 mt-4">
+                    <Label>Datas das Parcelas:</Label>
+                    <div className="grid grid-cols-3 gap-2 border rounded-md p-2">
+                      {installmentDates.map((date, index) => (
+                        <div key={index} className="text-sm">
+                          <span className="font-medium">{index + 1}ª:</span> {date}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
         <DialogFooter>

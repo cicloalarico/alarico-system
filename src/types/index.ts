@@ -1,5 +1,6 @@
 export type PriorityType = 'Baixa' | 'Normal' | 'Alta' | 'Urgente';
 export type ServiceStatusType = 'Aberta' | 'Em andamento' | 'Aguardando peças' | 'Concluída' | 'Entregue' | 'Cancelada' | 'Aguardando';
+export type PaymentMethodType = 'Dinheiro' | 'PIX' | 'Cartão de Crédito' | 'Cartão de Débito' | 'Crediário Loja';
 
 export interface ServiceOrder {
   id: string;
@@ -16,7 +17,12 @@ export interface ServiceOrder {
   notes?: string;
   services?: ServiceItem[];
   products?: ProductItem[];
-  laborValue?: number; // Added the laborValue field
+  laborValue?: number; 
+  paymentMethod?: PaymentMethodType;
+  downPayment?: number;
+  installments?: number;
+  installmentAmount?: number;
+  firstInstallmentDate?: string;
 }
 
 export interface ServiceItem {
@@ -197,4 +203,14 @@ export interface EmployeeAdvance {
   date: string;
   amount: number;
   description: string;
+}
+
+export interface PaymentInstallment {
+  id: string;
+  transactionId: string;
+  installmentNumber: number;
+  amount: number;
+  dueDate: string;
+  status: 'pago' | 'pendente' | 'atrasado' | 'cancelado';
+  paymentDate?: string;
 }
