@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -31,19 +32,19 @@ const App = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is authenticated (mock implementation)
+    // Check if user is authenticated from localStorage
     const checkAuth = () => {
       const hasAuth = localStorage.getItem("cicloAlarico_auth") === "true";
       setIsAuthenticated(hasAuth);
       setIsLoading(false);
     };
 
-    // Simulate a short delay for authentication check
-    setTimeout(checkAuth, 1000);
+    // Run the auth check immediately without delay
+    checkAuth();
   }, []);
 
   const login = () => {
-    localStorage.setItem("cicloAlarico_auth", "true");
+    // Authentication is now handled in the LoginForm component
     setIsAuthenticated(true);
   };
 

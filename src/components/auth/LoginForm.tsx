@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -42,6 +43,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
         title: "Login bem-sucedido",
         description: "Bem-vindo ao sistema Ciclo Alarico!",
       });
+      // Store authentication state in localStorage
+      localStorage.setItem("cicloAlarico_auth", "true");
       onLogin();
     } else {
       toast({
