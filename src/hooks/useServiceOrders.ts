@@ -1,7 +1,13 @@
 
 import { useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
-import { ServiceOrder, ServiceStatusType, PriorityType, FinancialTransaction, PaymentInstallment, PaymentMethodType } from '@/types';
+import { 
+  ServiceOrder, 
+  ServiceStatusType, 
+  PriorityType, 
+  PaymentMethodType 
+} from '@/types';
+import { FinancialTransaction } from '@/types/financial';
 import { technicianOptions, initialServiceOrders } from '@/data/serviceOrdersData';
 import { format, addMonths } from 'date-fns';
 
