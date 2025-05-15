@@ -19,65 +19,19 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Search, Plus } from "lucide-react";
 import CustomersList from "@/components/customers/CustomersList";
 import CustomerForm from "@/components/customers/CustomerForm";
 import CustomerDetails from "@/components/customers/CustomerDetails";
 import { Customer } from "@/types";
-
-// Mock customer data
-const initialCustomers = [
-  {
-    id: 1,
-    name: "João Silva",
-    email: "joao.silva@email.com",
-    phone: "(11) 98765-4321",
-    cpf: "123.456.789-00",
-    address: "Rua das Flores, 123 - São Paulo/SP",
-    notes: "Cliente VIP",
-  },
-  {
-    id: 2,
-    name: "Maria Oliveira",
-    email: "maria.oliveira@email.com",
-    phone: "(11) 91234-5678",
-    cpf: "987.654.321-00",
-    address: "Av. Paulista, 1000 - São Paulo/SP",
-    notes: "",
-  },
-  {
-    id: 3,
-    name: "Carlos Santos",
-    email: "carlos.santos@email.com",
-    phone: "(11) 95555-1234",
-    cpf: "456.789.123-00",
-    address: "Rua Augusta, 500 - São Paulo/SP",
-    notes: "Cliente inadimplente",
-  },
-  {
-    id: 4,
-    name: "Ana Ferreira",
-    email: "ana.ferreira@email.com",
-    phone: "(11) 94444-5678",
-    cpf: "789.123.456-00",
-    address: "Av. Faria Lima, 2000 - São Paulo/SP",
-    notes: "",
-  },
-  {
-    id: 5,
-    name: "Roberto Almeida",
-    email: "roberto.almeida@email.com",
-    phone: "(11) 93333-9999",
-    cpf: "321.654.987-00",
-    address: "Rua Oscar Freire, 300 - São Paulo/SP",
-    notes: "",
-  },
-];
+import { useCustomers } from "@/hooks/useCustomers";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Customers = () => {
   const { toast } = useToast();
-  const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
+  const { customers, loading, createCustomer, updateCustomer, deleteCustomer } = useCustomers();
+  
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -89,7 +43,7 @@ const Customers = () => {
   const filteredCustomers = customers.filter((customer) =>
     customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.cpf.includes(searchTerm)
+    (customer.cpf && customer.cpf.includes(searchTerm))
   );
 
   const handleFieldChange = (field: string, value: any) => {
@@ -108,64 +62,54 @@ const Customers = () => {
     return true;
   };
 
-  const handleAddCustomer = () => {
+  const handleAddCustomer = async () => {
     if (!validateForm()) return;
 
-    const id = customers.length > 0 ? Math.max(...customers.map(c => c.id)) + 1 : 1;
-    
-    const newCustomer: Customer = {
-      id,
-      name: selectedCustomer.name!,
-      email: selectedCustomer.email!,
-      phone: selectedCustomer.phone || "",
-      cpf: selectedCustomer.cpf!,
-      address: selectedCustomer.address || "",
-      notes: selectedCustomer.notes || "",
-    };
-    
-    setCustomers([...customers, newCustomer]);
-    setIsAddDialogOpen(false);
-    
-    toast({
-      title: "Cliente adicionado",
-      description: `${newCustomer.name} foi adicionado com sucesso.`,
-    });
-  };
-
-  const handleEditCustomer = () => {
-    if (!validateForm()) return;
-
-    setCustomers(customers.map(customer => 
-      customer.id === selectedCustomer.id ? {
-        ...customer,
+    try {
+      await createCustomer({
         name: selectedCustomer.name!,
         email: selectedCustomer.email!,
         phone: selectedCustomer.phone || "",
         cpf: selectedCustomer.cpf!,
         address: selectedCustomer.address || "",
         notes: selectedCustomer.notes || "",
-      } : customer
-    ));
-    
-    setIsEditDialogOpen(false);
-    
-    toast({
-      title: "Cliente atualizado",
-      description: `${selectedCustomer.name} foi atualizado com sucesso.`,
-    });
-  };
-
-  const handleDeleteCustomer = () => {
-    if (deleteCustomerId) {
-      const customerToDelete = customers.find(c => c.id === deleteCustomerId);
-      setCustomers(customers.filter(c => c.id !== deleteCustomerId));
-      
-      toast({
-        title: "Cliente removido",
-        description: `${customerToDelete?.name} foi removido com sucesso.`,
       });
       
-      setIsDeleteDialogOpen(false);
+      setIsAddDialogOpen(false);
+      setSelectedCustomer({});
+    } catch (error) {
+      console.error("Erro ao criar cliente:", error);
+    }
+  };
+
+  const handleEditCustomer = async () => {
+    if (!validateForm() || !selectedCustomer.id) return;
+
+    try {
+      await updateCustomer(selectedCustomer.id, {
+        name: selectedCustomer.name,
+        email: selectedCustomer.email,
+        phone: selectedCustomer.phone,
+        cpf: selectedCustomer.cpf,
+        address: selectedCustomer.address,
+        notes: selectedCustomer.notes,
+      });
+      
+      setIsEditDialogOpen(false);
+    } catch (error) {
+      console.error("Erro ao atualizar cliente:", error);
+    }
+  };
+
+  const handleDeleteCustomer = async () => {
+    if (deleteCustomerId) {
+      try {
+        await deleteCustomer(deleteCustomerId);
+        setIsDeleteDialogOpen(false);
+        setDeleteCustomerId(null);
+      } catch (error) {
+        console.error("Erro ao excluir cliente:", error);
+      }
     }
   };
 
@@ -215,12 +159,20 @@ const Customers = () => {
         />
       </div>
 
-      <CustomersList 
-        customers={filteredCustomers} 
-        onView={openViewDialog}
-        onEdit={openEditDialog} 
-        onDelete={openDeleteDialog}
-      />
+      {loading ? (
+        <div className="space-y-4">
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+        </div>
+      ) : (
+        <CustomersList 
+          customers={filteredCustomers} 
+          onView={openViewDialog}
+          onEdit={openEditDialog} 
+          onDelete={openDeleteDialog}
+        />
+      )}
 
       {/* Dialog para adicionar cliente */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
