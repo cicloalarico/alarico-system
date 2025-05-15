@@ -68,8 +68,6 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipPrimitive.Provider>
-        <Toaster />
-        <Sonner />
         <BrowserRouter>
           <Routes>
             {/* Public routes */}
@@ -109,9 +107,11 @@ const App = () => {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
+        <Toaster />
+        <Sonner />
       </TooltipPrimitive.Provider>
     </QueryClientProvider>
   );
-};
+}
 
 export default App;
