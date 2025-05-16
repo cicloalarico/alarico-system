@@ -31,8 +31,6 @@ import {
 import { CalendarIcon, Trash, Plus } from "lucide-react";
 import { Sale, Customer, Product } from "@/types";
 import { paymentMethodOptions, saleStatusOptions } from "@/data/salesData";
-import { customerOptions } from "@/data/serviceOrdersData";
-import { productOptions } from "@/data/serviceOrdersData";
 import { format } from "date-fns";
 import {
   Popover,
@@ -41,10 +39,13 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
+import { useCustomers } from "@/hooks/useCustomers";
+import { useProducts } from "@/hooks/useProducts";
+import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
   id: z.string().optional(),
-  customerId: z.number(),
+  customerId: z.number().optional().nullable(),
   date: z.date(),
   items: z.array(
     z.object({
@@ -74,35 +75,23 @@ const SaleForm: React.FC<SaleFormProps> = ({
   onSave,
   initialData,
 }) => {
-  // Convert the productOptions to fully conform to the Product type
-  const [productData, setProductData] = useState<Product[]>(
-    productOptions.map(product => ({
-      id: product.id,
-      code: product.code || `PROD-${product.id}`, // Provide default code if missing
-      name: product.name,
-      category: product.category || "",
-      brand: product.brand || "",
-      costPrice: product.costPrice || product.price || 0,
-      sellPrice: product.price || 0,
-      minSellPrice: product.minSellPrice || product.price || 0, // Add the missing property
-      profitMargin: product.profitMargin || 0, // Add the missing property
-      stock: product.stock || 0,
-      minStock: product.minStock || 0,
-      supplier: product.supplier || "",
-      price: product.price,
-      quantity: product.quantity
-    }))
-  );
+  const { toast } = useToast();
+  const { customers, loading: loadingCustomers } = useCustomers();
+  const { products, loading: loadingProducts } = useProducts();
+  const [isLoading, setIsLoading] = useState(true);
   
-  const [customers, setCustomers] = useState<Customer[]>(
-    customerOptions.map((c) => ({ id: c.id, name: c.name, email: "", phone: "", cpf: "", address: "", notes: "" }))
-  );
+  // Wait for both customers and products to load
+  useEffect(() => {
+    if (!loadingCustomers && !loadingProducts) {
+      setIsLoading(false);
+    }
+  }, [loadingCustomers, loadingProducts]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       id: initialData?.id || "",
-      customerId: initialData?.customerId || 0,
+      customerId: initialData?.customerId || null,
       date: initialData ? new Date(initialData.date) : new Date(),
       items: initialData?.items.map((item) => ({
         productId: Number(item.productId),
@@ -123,14 +112,18 @@ const SaleForm: React.FC<SaleFormProps> = ({
 
   // Adicionar um produto vazio automaticamente se não houver produtos
   useEffect(() => {
-    if (fields.length === 0) {
-      append({ productId: 0, quantity: 1, unitPrice: 0 });
+    if (fields.length === 0 && products.length > 0) {
+      append({ 
+        productId: products[0].id, 
+        quantity: 1, 
+        unitPrice: products[0].sellPrice || 0 
+      });
     }
-  }, [fields.length, append]);
+  }, [fields.length, append, products]);
 
   // Atualizar o preço unitário quando o produto é selecionado
   const updateProductPrice = (index: number, productId: number) => {
-    const product = productData.find((p) => p.id === productId);
+    const product = products.find((p) => p.id === productId);
     if (product) {
       form.setValue(`items.${index}.unitPrice`, product.sellPrice);
     }
@@ -152,7 +145,7 @@ const SaleForm: React.FC<SaleFormProps> = ({
       customerId: data.customerId,
       date: format(data.date, "yyyy-MM-dd"),
       items: data.items.map((item, index) => {
-        const product = productData.find((p) => p.id === item.productId);
+        const product = products.find((p) => p.id === item.productId);
         return {
           id: index.toString(),
           productId: item.productId,
@@ -172,6 +165,23 @@ const SaleForm: React.FC<SaleFormProps> = ({
     onSave(formattedData);
     form.reset();
   };
+
+  if (isLoading) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>
+              {initialData ? "Editar Venda" : "Nova Venda"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex justify-center items-center py-12">
+            Carregando informações...
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -193,8 +203,8 @@ const SaleForm: React.FC<SaleFormProps> = ({
                   <FormItem>
                     <FormLabel>Cliente</FormLabel>
                     <Select
-                      value={field.value.toString()}
-                      onValueChange={(value) => field.onChange(Number(value))}
+                      value={field.value?.toString() || ""}
+                      onValueChange={(value) => field.onChange(value ? Number(value) : null)}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -269,12 +279,34 @@ const SaleForm: React.FC<SaleFormProps> = ({
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => append({ productId: 0, quantity: 1, unitPrice: 0 })}
+                  onClick={() => {
+                    if (products.length > 0) {
+                      append({ 
+                        productId: products[0].id, 
+                        quantity: 1, 
+                        unitPrice: products[0].sellPrice || 0 
+                      });
+                    } else {
+                      toast({
+                        title: "Atenção",
+                        description: "Não há produtos disponíveis para adicionar à venda.",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
                 >
                   <Plus className="mr-2 h-4 w-4" />
                   Adicionar Produto
                 </Button>
               </div>
+
+              {products.length === 0 && (
+                <div className="text-center p-4 border rounded-md bg-gray-50">
+                  <p className="text-sm text-gray-500">
+                    Não há produtos cadastrados. Adicione produtos antes de criar uma venda.
+                  </p>
+                </div>
+              )}
 
               {fields.map((field, index) => (
                 <div
@@ -302,7 +334,7 @@ const SaleForm: React.FC<SaleFormProps> = ({
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {productData.map((product) => (
+                              {products.map((product) => (
                                 <SelectItem
                                   key={product.id}
                                   value={product.id.toString()}
