@@ -23,86 +23,12 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogFooter,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { useToast } from "@/components/ui/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
 import { Search, Plus, Edit, AlertTriangle } from "lucide-react";
 import ProductForm from "@/components/products/ProductForm";
-
-// Mock product data
-const initialProducts = [
-  {
-    id: 1,
-    code: "BIC001",
-    name: "Bicicleta Mountain Bike 29\"",
-    category: "Bicicletas",
-    brand: "Trek",
-    costPrice: 1200.00,
-    sellPrice: 1899.90,
-    minSellPrice: 1500.00,
-    profitMargin: 25.0,
-    stock: 5,
-    minStock: 2,
-    supplier: "Trek Brasil",
-  },
-  {
-    id: 2,
-    code: "PEC001",
-    name: "Pedal Plataforma Alumínio",
-    category: "Componentes",
-    brand: "Shimano",
-    costPrice: 89.90,
-    sellPrice: 139.90,
-    minSellPrice: 110.00,
-    profitMargin: 22.4,
-    stock: 15,
-    minStock: 5,
-    supplier: "Shimano Brasil",
-  },
-  {
-    id: 3,
-    code: "PNEU001",
-    name: "Pneu MTB 29\" x 2.20",
-    category: "Pneus",
-    brand: "Michelin",
-    costPrice: 79.90,
-    sellPrice: 129.90,
-    minSellPrice: 100.00,
-    profitMargin: 25.2,
-    stock: 8,
-    minStock: 10,
-    supplier: "Michelin Importadora",
-  },
-  {
-    id: 4,
-    code: "CAP001",
-    name: "Capacete MTB Ventilado",
-    category: "Acessórios",
-    brand: "Specialized",
-    costPrice: 150.00,
-    sellPrice: 249.90,
-    minSellPrice: 190.00,
-    profitMargin: 26.7,
-    stock: 12,
-    minStock: 5,
-    supplier: "Specialized Brasil",
-  },
-  {
-    id: 5,
-    code: "LUB001",
-    name: "Lubrificante para Corrente 100ml",
-    category: "Lubrificantes",
-    brand: "WD-40 Bike",
-    costPrice: 25.00,
-    sellPrice: 39.90,
-    minSellPrice: 32.00,
-    profitMargin: 28.0,
-    stock: 3,
-    minStock: 15,
-    supplier: "WD-40 Brasil",
-  },
-];
+import { useProducts } from "@/hooks/useProducts";
 
 const categories = [
   "Bicicletas",
@@ -116,7 +42,8 @@ const categories = [
 
 const Products = () => {
   const { toast } = useToast();
-  const [products, setProducts] = useState(initialProducts);
+  const { products, loading, createProduct } = useProducts();
+  
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -146,7 +73,7 @@ const Products = () => {
     return matchesSearch;
   });
 
-  const handleAddProduct = () => {
+  const handleAddProduct = async () => {
     if (!newProduct.code || !newProduct.name || !newProduct.category) {
       toast({
         title: "Erro ao adicionar produto",
@@ -156,28 +83,25 @@ const Products = () => {
       return;
     }
 
-    const id = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
-    
-    setProducts([...products, { id, ...newProduct }]);
-    setNewProduct({
-      code: "",
-      name: "",
-      category: "",
-      brand: "",
-      costPrice: 0,
-      sellPrice: 0,
-      minSellPrice: 0,
-      profitMargin: 0,
-      stock: 0,
-      minStock: 0,
-      supplier: "",
-    });
-    setIsAddDialogOpen(false);
-    
-    toast({
-      title: "Produto adicionado",
-      description: `${newProduct.name} foi adicionado com sucesso.`,
-    });
+    try {
+      await createProduct(newProduct);
+      setIsAddDialogOpen(false);
+      setNewProduct({
+        code: "",
+        name: "",
+        category: "",
+        brand: "",
+        costPrice: 0,
+        sellPrice: 0,
+        minSellPrice: 0,
+        profitMargin: 0,
+        stock: 0,
+        minStock: 0,
+        supplier: "",
+      });
+    } catch (error) {
+      console.error("Erro ao adicionar produto:", error);
+    }
   };
 
   const handleInputChange = (field: string, value: any) => {
@@ -249,7 +173,19 @@ const Products = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredProducts.length === 0 ? (
+            {loading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                  <TableCell><Skeleton className="h-5 w-40" /></TableCell>
+                  <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-24" /></TableCell>
+                  <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-24" /></TableCell>
+                  <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                  <TableCell><Skeleton className="h-5 w-10" /></TableCell>
+                  <TableCell><Skeleton className="h-5 w-10" /></TableCell>
+                </TableRow>
+              ))
+            ) : filteredProducts.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-6 text-gray-500">
                   Nenhum produto encontrado
