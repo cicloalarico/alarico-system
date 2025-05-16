@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { format, addMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -62,7 +61,7 @@ const ServiceOrderDetails = ({
   
   // Generate installment dates if using store credit
   const renderInstallmentDates = () => {
-    if (order.paymentMethod !== "crediario" || !order.installments || !order.firstInstallmentDate) {
+    if (order.paymentMethod !== "Crediário Loja" || !order.installments || !order.firstInstallmentDate) {
       return null;
     }
     
