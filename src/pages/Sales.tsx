@@ -2,12 +2,12 @@
 import React, { useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { salesData } from "@/data/salesData";
 import { Sale } from "@/types";
-import { toast } from "@/hooks/use-toast";
 import SalesList from "@/components/sales/SalesList";
 import SaleForm from "@/components/sales/SaleForm";
 import SaleDetails from "@/components/sales/SaleDetails";
+import { useSales } from "@/hooks/useSales";
+import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,39 +20,43 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const Sales: React.FC = () => {
-  const [sales, setSales] = useState<Sale[]>(salesData);
+  const { sales, createSale, updateSaleStatus, deleteSale } = useSales();
+  const { toast } = useToast();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedSale, setSelectedSale] = useState<Sale | undefined>(undefined);
 
-  const handleAddSale = (sale: Sale) => {
-    setSales([sale, ...sales]);
-    setIsAddDialogOpen(false);
-    toast({
-      title: "Venda cadastrada com sucesso",
-      description: `A venda ${sale.id} foi adicionada com sucesso.`,
-    });
+  const handleAddSale = (sale: Omit<Sale, 'id'>) => {
+    createSale(sale)
+      .then(() => {
+        setIsAddDialogOpen(false);
+      })
+      .catch(error => {
+        console.error("Erro ao adicionar venda:", error);
+      });
   };
 
   const handleEditSale = (sale: Sale) => {
-    setSales(sales.map((s) => (s.id === sale.id ? sale : s)));
-    setIsEditDialogOpen(false);
-    toast({
-      title: "Venda atualizada com sucesso",
-      description: `A venda ${sale.id} foi atualizada com sucesso.`,
-    });
+    updateSaleStatus(sale.id, sale.status)
+      .then(() => {
+        setIsEditDialogOpen(false);
+      })
+      .catch(error => {
+        console.error("Erro ao atualizar venda:", error);
+      });
   };
 
   const handleDeleteSale = () => {
     if (selectedSale) {
-      setSales(sales.filter((s) => s.id !== selectedSale.id));
-      setIsDeleteDialogOpen(false);
-      toast({
-        title: "Venda excluída com sucesso",
-        description: `A venda ${selectedSale.id} foi excluída com sucesso.`,
-      });
+      deleteSale(selectedSale.id)
+        .then(() => {
+          setIsDeleteDialogOpen(false);
+        })
+        .catch(error => {
+          console.error("Erro ao excluir venda:", error);
+        });
     }
   };
 

@@ -116,12 +116,10 @@ export const useServiceOrders = () => {
       // Se for à vista (dinheiro ou PIX), cria uma única transação
       if (order.paymentMethod === "Dinheiro" || order.paymentMethod === "PIX") {
         // Usar a função de banco de dados para gerar ID da transação
-        const { data: transactionIdData, error: idError } = await supabase
+        const { data: transactionId, error: idError } = await supabase
           .rpc('generate_financial_transaction_id');
 
         if (idError) throw idError;
-
-        const transactionId = transactionIdData;
 
         // Inserir transação financeira
         const { data, error } = await supabase
@@ -161,12 +159,10 @@ export const useServiceOrders = () => {
       // Se for cartão, cria uma única transação pendente
       else if (order.paymentMethod === "Cartão de Crédito" || order.paymentMethod === "Cartão de Débito") {
         // Usar a função de banco de dados para gerar ID da transação
-        const { data: transactionIdData, error: idError } = await supabase
+        const { data: transactionId, error: idError } = await supabase
           .rpc('generate_financial_transaction_id');
 
         if (idError) throw idError;
-
-        const transactionId = transactionIdData;
 
         // Inserir transação financeira
         const { data, error } = await supabase
@@ -210,12 +206,10 @@ export const useServiceOrders = () => {
         // Transação para entrada se houver
         if (order.downPayment && order.downPayment > 0) {
           // Usar a função de banco de dados para gerar ID da transação
-          const { data: transactionIdData, error: idError } = await supabase
+          const { data: transactionId, error: idError } = await supabase
             .rpc('generate_financial_transaction_id');
 
           if (idError) throw idError;
-
-          const transactionId = transactionIdData;
 
           // Inserir transação de entrada
           const { data, error } = await supabase
@@ -261,18 +255,18 @@ export const useServiceOrders = () => {
             const dueDate = format(addMonths(firstDate, i), 'yyyy-MM-dd');
             
             // Usar a função de banco de dados para gerar ID da transação
-            const { data: transactionIdData, error: idError } = await supabase
+            const { data: transactionId, error: idError } = await supabase
               .rpc('generate_financial_transaction_id');
 
             if (idError) throw idError;
 
-            const transactionId = `${transactionIdData}-P${i+1}`;
+            const installmentId = `${transactionId}-P${i+1}`;
 
             // Inserir transação de parcela
             const { data, error } = await supabase
               .from('financial_transactions')
               .insert({
-                id: transactionId,
+                id: installmentId,
                 date: new Date().toISOString().split('T')[0],
                 description: `Parcela ${i+1}/${order.installments} - OS ${order.id} - ${order.customer}`,
                 category: "serviços",
@@ -326,12 +320,10 @@ export const useServiceOrders = () => {
     
     try {
       // Usar a função de banco de dados para gerar ID de ordem de serviço
-      const { data: orderIdData, error: idError } = await supabase
+      const { data: orderId, error: idError } = await supabase
         .rpc('generate_service_order_id');
 
       if (idError) throw idError;
-
-      const orderId = orderIdData;
 
       // Ensure the priority is valid by checking against allowed values
       const validPriorities: PriorityType[] = ["Baixa", "Normal", "Alta", "Urgente"];
@@ -397,10 +389,11 @@ export const useServiceOrders = () => {
 
         // Atualizar estoque dos produtos
         for (const product of data.products) {
+          // Usando update diretamente em vez de rpc para decrement
           const { error: updateError } = await supabase
             .from('products')
             .update({ 
-              stock: supabase.rpc('decrement', { x: product.quantity })
+              stock: supabase.sql`stock - ${product.quantity}`
             })
             .eq('id', product.id);
 

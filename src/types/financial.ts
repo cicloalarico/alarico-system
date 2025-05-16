@@ -1,24 +1,17 @@
 
-import { PaymentMethodType } from './common';
-
 export interface FinancialTransaction {
   id: string;
   date: string;
   description: string;
   category: string;
   amount: number;
-  type: 'receita' | 'despesa';
+  type: TransactionType;
   paymentMethod: PaymentMethodType;
-  status: 'pago' | 'pendente' | 'cancelado';
+  status: TransactionStatusType;
   dueDate?: string;
   relatedId?: string;
   notes?: string;
 }
 
-export interface CashFlow {
-  date: string;
-  initialBalance: number;
-  inflow: number;
-  outflow: number;
-  finalBalance: number;
-}
+export type TransactionType = "receita" | "despesa";
+export type TransactionStatusType = "pendente" | "pago" | "cancelado" | "atrasado";

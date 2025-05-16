@@ -91,13 +91,10 @@ export const useSales = () => {
       };
 
       // Usar a função de banco de dados para gerar ID de venda
-      const { data: saleResult, error: saleError } = await supabase
-        .rpc('generate_sale_id')
-        .select();
+      const { data: saleId, error: saleError } = await supabase
+        .rpc('generate_sale_id');
 
       if (saleError) throw saleError;
-
-      const saleId = saleResult;
 
       // Inserir a venda com o ID gerado
       const { data: insertedSale, error: insertError } = await supabase
@@ -125,10 +122,11 @@ export const useSales = () => {
 
       // Atualizar o estoque dos produtos
       for (const item of saleData.items) {
+        // Usando update diretamente em vez de rpc para decrement
         const { error: updateError } = await supabase
           .from('products')
           .update({ 
-            stock: supabase.rpc('decrement', { x: item.quantity })
+            stock: supabase.sql`stock - ${item.quantity}`
           })
           .eq('id', item.productId);
 
@@ -227,10 +225,11 @@ export const useSales = () => {
 
       // Atualizar o estoque dos produtos (devolver ao estoque)
       for (const item of items) {
+        // Usando update diretamente em vez de rpc para increment
         const { error: updateError } = await supabase
           .from('products')
           .update({ 
-            stock: supabase.rpc('increment', { x: item.quantity })
+            stock: supabase.sql`stock + ${item.quantity}`
           })
           .eq('id', item.product_id);
 
