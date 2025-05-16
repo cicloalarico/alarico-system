@@ -393,15 +393,23 @@ export const useServiceOrders = () => {
 
         // Atualizar estoque dos produtos
         for (const product of productsToInsert) {
-          // Execute direct update instead of using rpc with return value
+          // First, call the RPC function to get the new stock value
+          const { data: newStock, error: rpcError } = await supabase
+            .rpc('decrement_stock', { 
+              product_id: product.product_id, 
+              amount: product.quantity 
+            });
+          
+          if (rpcError) {
+            console.error('Erro ao atualizar estoque:', rpcError);
+            // Continua o processo
+            continue;
+          }
+          
+          // Then update the product with the new stock value
           const { error: updateError } = await supabase
             .from('products')
-            .update({ 
-              stock: supabase.rpc('decrement_stock', { 
-                product_id: product.product_id, 
-                amount: product.quantity 
-              })
-            })
+            .update({ stock: newStock })
             .eq('id', product.product_id);
 
           if (updateError) {

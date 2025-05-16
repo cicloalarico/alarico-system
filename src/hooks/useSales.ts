@@ -122,15 +122,23 @@ export const useSales = () => {
 
       // Atualizar o estoque dos produtos
       for (const item of saleData.items) {
-        // Execute direct update instead of using rpc with return value
+        // First, call the RPC function to get the new stock value
+        const { data: newStock, error: rpcError } = await supabase
+          .rpc('decrement_stock', { 
+            product_id: item.productId, 
+            amount: item.quantity 
+          });
+        
+        if (rpcError) {
+          console.error('Erro ao atualizar estoque:', rpcError);
+          // Não interrompe o processo, apenas loga o erro
+          continue;
+        }
+        
+        // Then update the product with the new stock value
         const { error: updateError } = await supabase
           .from('products')
-          .update({ 
-            stock: supabase.rpc('decrement_stock', { 
-              product_id: item.productId, 
-              amount: item.quantity 
-            })
-          })
+          .update({ stock: newStock })
           .eq('id', item.productId);
 
         if (updateError) {
@@ -228,15 +236,23 @@ export const useSales = () => {
 
       // Atualizar o estoque dos produtos (devolver ao estoque)
       for (const item of items) {
-        // Execute direct update instead of using rpc with return value
+        // First, call the RPC function to get the new stock value
+        const { data: newStock, error: rpcError } = await supabase
+          .rpc('increment_stock', { 
+            product_id: item.product_id, 
+            amount: item.quantity 
+          });
+        
+        if (rpcError) {
+          console.error('Erro ao atualizar estoque:', rpcError);
+          // Não interrompe o processo, apenas loga o erro
+          continue;
+        }
+        
+        // Then update the product with the new stock value
         const { error: updateError } = await supabase
           .from('products')
-          .update({ 
-            stock: supabase.rpc('increment_stock', { 
-              product_id: item.product_id, 
-              amount: item.quantity 
-            })
-          })
+          .update({ stock: newStock })
           .eq('id', item.product_id);
 
         if (updateError) {
