@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -29,7 +30,8 @@ import {
 } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { CalendarIcon } from "lucide-react";
-import { FinancialTransaction } from "@/types";
+import { FinancialTransaction } from "@/types/financial";
+import { PaymentMethodType, TransactionStatusType } from "@/types/common";
 import { categories } from "@/data/financialData";
 import { paymentMethodOptions } from "@/data/salesData";
 import { format } from "date-fns";

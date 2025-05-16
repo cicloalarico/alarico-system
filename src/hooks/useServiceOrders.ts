@@ -1,6 +1,7 @@
+
 import { useState, useEffect } from 'react';
-import { ServiceOrder, ServiceItem, ProductItem, ServiceStatusType, PriorityType, 
-  PaymentMethodType } from '@/types';
+import { ServiceOrder, ServiceItem, ProductItem, ServiceStatusType, PriorityType } from '@/types';
+import { PaymentMethodType, TransactionStatusType } from '@/types/common';
 import { FinancialTransaction, TransactionType } from '@/types/financial';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -310,7 +311,7 @@ export const useServiceOrders = () => {
   };
 
   // Manipular criação de uma nova ordem de serviço
-  const handleCreateServiceOrder = async (newOrder: Omit<ServiceOrder, 'id'>) => {
+  const handleCreateServiceOrder = async (orderData: Omit<ServiceOrder, 'id'>) => {
     setLoading(true);
     
     try {
@@ -322,38 +323,38 @@ export const useServiceOrders = () => {
 
       // Ensure the priority is valid by checking against allowed values
       const validPriorities: PriorityType[] = ["Baixa", "Normal", "Alta", "Urgente"];
-      const priority: PriorityType = validPriorities.includes(newOrder.priority as PriorityType) 
-        ? (newOrder.priority as PriorityType) 
+      const priority: PriorityType = validPriorities.includes(orderData.priority as PriorityType) 
+        ? (orderData.priority as PriorityType) 
         : "Normal";
 
       // Inserir a ordem de serviço
-      const { data: orderData, error: orderError } = await supabase
+      const { data: orderData2, error: orderError } = await supabase
         .from('service_orders')
         .insert({
           id: orderId,
-          customer_id: newOrder.customerId,
-          bike_model: newOrder.bikeModel,
-          issue_description: newOrder.issueDescription,
+          customer_id: orderData.customerId,
+          bike_model: orderData.bikeModel,
+          issue_description: orderData.issueDescription,
           status: "Aberta",
           priority: priority,
-          scheduled_for: newOrder.scheduledFor,
-          technician_id: newOrder.technicianId ? parseInt(newOrder.technicianId) : null,
-          total_price: newOrder.totalPrice,
-          notes: newOrder.notes,
-          labor_value: newOrder.laborValue || 0,
-          payment_method: newOrder.paymentMethod as PaymentMethodType,
-          down_payment: newOrder.downPayment,
-          installments: newOrder.installments,
-          installment_amount: newOrder.installmentAmount,
-          first_installment_date: newOrder.firstInstallmentDate
+          scheduled_for: orderData.scheduledFor,
+          technician_id: orderData.technicianId ? parseInt(orderData.technicianId) : null,
+          total_price: orderData.totalPrice,
+          notes: orderData.notes,
+          labor_value: orderData.laborValue || 0,
+          payment_method: orderData.paymentMethod as PaymentMethodType,
+          down_payment: orderData.downPayment,
+          installments: orderData.installments,
+          installment_amount: orderData.installmentAmount,
+          first_installment_date: orderData.firstInstallmentDate
         })
         .select();
 
       if (orderError) throw orderError;
 
       // Inserir os serviços
-      if (newOrder.services && newOrder.services.length > 0) {
-        const servicesToInsert = newOrder.services.map((service: any) => ({
+      if (orderData.services && orderData.services.length > 0) {
+        const servicesToInsert = orderData.services.map((service: any) => ({
           service_order_id: orderId,
           name: service.name,
           price: service.price
@@ -367,8 +368,8 @@ export const useServiceOrders = () => {
       }
 
       // Inserir os produtos e atualizar estoque
-      if (newOrder.products && newOrder.products.length > 0) {
-        const productsToInsert = newOrder.products.map((product: any) => ({
+      if (orderData.products && orderData.products.length > 0) {
+        const productsToInsert = orderData.products.map((product: any) => ({
           service_order_id: orderId,
           product_id: product.id,
           quantity: product.quantity,
@@ -383,62 +384,62 @@ export const useServiceOrders = () => {
         if (productsError) throw productsError;
 
         // Atualizar estoque dos produtos
-        if (productsToInsert.length > 0) {
-          for (const product of productsToInsert) {
-            // Utilizando rpc em vez de sql
-            const { error: updateError } = await supabase
-              .from('products')
-              .update({ stock: supabase.rpc('decrement_stock', { amount: product.quantity }) })
-              .eq('id', product.id);
+        for (const product of productsToInsert) {
+          // Using direct update with decrement_stock function
+          const { error: updateError } = await supabase
+            .from('products')
+            .update({ stock: supabase.rpc('decrement_stock', { product_id: product.product_id, amount: product.quantity }) })
+            .eq('id', product.product_id);
 
-            if (updateError) {
-              console.error('Erro ao atualizar estoque:', updateError);
-              // Continua o processo
-            }
+          if (updateError) {
+            console.error('Erro ao atualizar estoque:', updateError);
+            // Continua o processo
           }
         }
       }
 
       // Criar a ordem de serviço formatada
-      const newOrder: ServiceOrder = {
+      const newOrderData: ServiceOrder = {
         id: orderId,
-        customer: newOrder.customer,
-        bikeModel: newOrder.bikeModel,
-        issueDescription: newOrder.issueDescription,
+        customer: orderData.customer,
+        bikeModel: orderData.bikeModel,
+        issueDescription: orderData.issueDescription,
         status: "Aberta",
         priority,
         createdAt: new Date().toISOString().split('T')[0],
-        scheduledFor: newOrder.scheduledFor,
+        scheduledFor: orderData.scheduledFor,
         completedAt: null,
-        technician: newOrder.technicianId ? technicianOptions.find(t => t.id === parseInt(newOrder.technicianId))?.name || null : null,
-        services: newOrder.services ? newOrder.services.map((s: any) => ({ ...s, id: String(s.id) })) : [],
-        products: newOrder.products,
-        totalPrice: newOrder.totalPrice,
-        notes: newOrder.notes,
-        laborValue: newOrder.laborValue || 0,
-        paymentMethod: newOrder.paymentMethod as PaymentMethodType,
-        downPayment: newOrder.downPayment,
-        installments: newOrder.installments,
-        installmentAmount: newOrder.installmentAmount,
-        firstInstallmentDate: newOrder.firstInstallmentDate,
+        technician: orderData.technicianId ? technicianOptions.find(t => t.id === parseInt(orderData.technicianId))?.name || null : null,
+        services: orderData.services ? orderData.services.map((s: any) => ({ ...s, id: String(s.id) })) : [],
+        products: orderData.products,
+        totalPrice: orderData.totalPrice,
+        notes: orderData.notes,
+        laborValue: orderData.laborValue || 0,
+        paymentMethod: orderData.paymentMethod as PaymentMethodType,
+        downPayment: orderData.downPayment,
+        installments: orderData.installments,
+        installmentAmount: orderData.installmentAmount,
+        firstInstallmentDate: orderData.firstInstallmentDate,
+        customerId: orderData.customerId,  // Adding this to support the ServiceOrder type
+        technicianId: orderData.technicianId  // Adding this to support the ServiceOrder type
       };
 
-      setServiceOrders([...serviceOrders, newOrder]);
+      setServiceOrders([...serviceOrders, newOrderData]);
       setIsAddDialogOpen(false);
       
       // Gerar as transações financeiras
-      const transactions = await generateFinancialTransactions(newOrder);
+      const transactions = await generateFinancialTransactions(newOrderData);
       
       toast({
         title: "Ordem de serviço criada",
-        description: `OS ${newOrder.id} foi criada com sucesso.`,
+        description: `OS ${newOrderData.id} foi criada com sucesso.`,
       });
       
       // Mostra uma mensagem adicional se foram criadas parcelas a receber
       if (transactions.length > 1) {
         toast({
           title: "Parcelas a receber criadas",
-          description: `Foram geradas ${transactions.length - (newOrder.downPayment ? 1 : 0)} parcelas no financeiro.`,
+          description: `Foram geradas ${transactions.length - (newOrderData.downPayment ? 1 : 0)} parcelas no financeiro.`,
         });
       }
 

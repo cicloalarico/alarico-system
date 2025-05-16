@@ -6,12 +6,14 @@ export interface DateRange {
   to: Date | undefined;
 }
 
+export type TransactionStatusType = 'pago' | 'pendente' | 'atrasado' | 'cancelado';
+
 export interface PaymentInstallment {
   id: string;
   transactionId: string;
   installmentNumber: number;
   amount: number;
   dueDate: string;
-  status: 'pago' | 'pendente' | 'atrasado' | 'cancelado';
+  status: TransactionStatusType;
   paymentDate?: string;
 }

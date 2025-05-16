@@ -17,7 +17,7 @@ export interface FinancialTransaction {
 
 export type TransactionType = "receita" | "despesa";
 
-// Adicionando a interface CashFlow
+// Adding the interface CashFlow
 export interface CashFlow {
   date: string;
   initialBalance: number;

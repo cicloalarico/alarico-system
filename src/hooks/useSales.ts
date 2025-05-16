@@ -121,10 +121,10 @@ export const useSales = () => {
 
       // Atualizar o estoque dos produtos
       for (const item of saleData.items) {
-        // Utilizando o operador de subtração diretamente na query
+        // Using direct update with a calculated value instead of RPC
         const { error: updateError } = await supabase
           .from('products')
-          .update({ stock: supabase.rpc('decrement_stock', { amount: item.quantity }) })
+          .update({ stock: supabase.rpc('decrement_stock', { product_id: item.productId, amount: item.quantity }) })
           .eq('id', item.productId);
 
         if (updateError) {
@@ -222,10 +222,10 @@ export const useSales = () => {
 
       // Atualizar o estoque dos produtos (devolver ao estoque)
       for (const item of items) {
-        // Utilizando o operador de adição diretamente na query
+        // Using direct update with a calculated value instead of RPC
         const { error: updateError } = await supabase
           .from('products')
-          .update({ stock: supabase.rpc('increment_stock', { amount: item.quantity }) })
+          .update({ stock: supabase.rpc('increment_stock', { product_id: item.product_id, amount: item.quantity }) })
           .eq('id', item.product_id);
 
         if (updateError) {
