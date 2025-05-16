@@ -11,6 +11,7 @@ import { priorityOptions } from "@/data/serviceOrdersData";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useProducts } from "@/hooks/useProducts";
 import { useServices } from "@/hooks/useServices";
+import { Product as FormProduct } from "@/components/service-orders/ServiceOrderForm";
 
 const ServiceOrders = () => {
   const {
@@ -25,9 +26,9 @@ const ServiceOrders = () => {
     handleUpdateStatus
   } = useServiceOrders();
 
-  const { customers } = useCustomers();
-  const { products } = useProducts();
-  const { services } = useServices();
+  const { customers, fetchCustomers } = useCustomers();
+  const { products, fetchProducts } = useProducts();
+  const { services, fetchServices } = useServices();
   
   // Get technicians from the database (in a real app)
   const [technicianOptions, setTechnicianOptions] = useState([
@@ -43,6 +44,19 @@ const ServiceOrders = () => {
     setActiveTab,
     filteredServiceOrders
   } = useServiceOrdersFilter(serviceOrders);
+
+  useEffect(() => {
+    fetchCustomers();
+    fetchProducts();
+    fetchServices();
+  }, []);
+
+  // Convert products for the service order form
+  const formattedProducts: FormProduct[] = products.map(product => ({
+    id: product.id,
+    name: product.name,
+    price: product.price || 0,
+  }));
 
   return (
     <div className="space-y-6">
@@ -69,7 +83,7 @@ const ServiceOrders = () => {
         onSubmit={handleCreateServiceOrder}
         customers={customers}
         serviceOptions={services}
-        productOptions={products}
+        productOptions={formattedProducts}
         technicianOptions={technicianOptions}
         priorityOptions={priorityOptions}
       />

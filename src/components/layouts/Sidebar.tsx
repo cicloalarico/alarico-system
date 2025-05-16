@@ -12,14 +12,13 @@ import {
   Package,
   Settings,
   ShoppingCart,
-  Tool,
+  Wrench,
   Truck,
   Users,
   Wallet,
-  Wrench,
 } from "lucide-react";
 
-const Sidebar = () => {
+const Sidebar = ({ expanded = true }) => {
   const location = useLocation();
   const pathName = location.pathname;
 
@@ -47,7 +46,7 @@ const Sidebar = () => {
     {
       name: "Serviços",
       href: "/services",
-      icon: <Tool className="mr-2 h-4 w-4" />,
+      icon: <Wrench className="mr-2 h-4 w-4" />,
     },
     {
       name: "Ordens de Serviço",
@@ -122,11 +121,11 @@ const Sidebar = () => {
   };
 
   return (
-    <aside className="hidden lg:flex h-screen w-64 flex-col border-r bg-background">
+    <aside className={`${expanded ? 'w-64' : 'w-20'} hidden lg:flex h-screen flex-col border-r bg-background transition-all duration-300`}>
       <div className="flex h-14 items-center border-b px-4">
         <Link to="/" className="flex items-center gap-2 font-semibold">
           <ClipboardList className="h-6 w-6" />
-          <span className="text-lg">BikeMaster</span>
+          {expanded && <span className="text-lg">BikeMaster</span>}
         </Link>
       </div>
       <nav className="flex-1 overflow-auto py-4">
@@ -134,19 +133,19 @@ const Sidebar = () => {
           {mainLinks.map((link) => (
             <NavLink key={link.name} href={link.href}>
               {link.icon}
-              {link.name}
+              {expanded && link.name}
             </NavLink>
           ))}
         </div>
         <div className="mt-8">
           <div className="px-4 text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
-            Administração
+            {expanded && "Administração"}
           </div>
           <div className="px-4 space-y-1">
             {secondaryLinks.map((link) => (
               <NavLink key={link.name} href={link.href}>
                 {link.icon}
-                {link.name}
+                {expanded && link.name}
               </NavLink>
             ))}
           </div>

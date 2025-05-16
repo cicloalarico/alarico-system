@@ -21,10 +21,16 @@ import Services from "@/pages/Services";
 import "./App.css";
 
 function App() {
+  const handleLogin = (email: string, password: string) => {
+    console.log("Login attempt with:", email, password);
+    // Implement actual login logic here
+    return true;
+  };
+
   return (
     <Router>
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
+        <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Dashboard />} />
           <Route path="calendar" element={<Calendar />} />
