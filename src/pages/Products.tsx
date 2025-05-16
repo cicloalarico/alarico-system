@@ -59,6 +59,7 @@ const Products = () => {
     stock: 0,
     minStock: 0,
     supplier: "",
+    location: "",
   });
 
   const filteredProducts = products.filter((product) => {
@@ -98,6 +99,12 @@ const Products = () => {
         stock: 0,
         minStock: 0,
         supplier: "",
+        location: "",
+      });
+      
+      toast({
+        title: "Produto adicionado",
+        description: `${newProduct.name} foi adicionado com sucesso.`,
       });
     } catch (error) {
       console.error("Erro ao adicionar produto:", error);

@@ -21,7 +21,25 @@ export const useProducts = () => {
         throw error;
       }
 
-      setProducts(data as Product[]);
+      // Map the database column names to our frontend model properties
+      const mappedProducts: Product[] = data.map(item => ({
+        id: item.id,
+        code: item.code,
+        name: item.name,
+        category: item.category,
+        brand: item.brand,
+        costPrice: item.cost_price,
+        sellPrice: item.sell_price,
+        minSellPrice: item.min_sell_price,
+        profitMargin: item.profit_margin,
+        stock: item.stock,
+        minStock: item.min_stock,
+        supplier: item.supplier,
+        location: item.location,
+        lastUpdated: item.last_updated
+      }));
+
+      setProducts(mappedProducts);
     } catch (error: any) {
       console.error("Erro ao buscar produtos:", error.message);
       toast({
