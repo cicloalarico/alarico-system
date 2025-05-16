@@ -108,10 +108,10 @@ const Sidebar = ({ expanded = true }) => {
       <Link
         to={href}
         className={cn(
-          "flex items-center rounded-lg px-3 py-2 text-sm transition-all hover:bg-gray-100 dark:hover:bg-gray-800",
+          "flex items-center rounded-lg px-3 py-2 text-sm transition-all",
           isActive
-            ? "bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-50"
-            : "text-gray-500 dark:text-gray-400",
+            ? "bg-shop-dark text-white"
+            : "text-white hover:bg-shop-dark hover:text-white",
           className
         )}
       >
@@ -121,9 +121,9 @@ const Sidebar = ({ expanded = true }) => {
   };
 
   return (
-    <aside className={`${expanded ? 'w-64' : 'w-20'} hidden lg:flex h-screen flex-col border-r bg-background transition-all duration-300`}>
-      <div className="flex h-14 items-center border-b px-4">
-        <Link to="/" className="flex items-center gap-2 font-semibold">
+    <aside className={`${expanded ? 'w-64' : 'w-20'} hidden lg:flex h-screen flex-col border-r bg-shop-primary transition-all duration-300`}>
+      <div className="flex h-14 items-center border-b border-shop-dark px-4">
+        <Link to="/" className="flex items-center gap-2 font-semibold text-white">
           <ClipboardList className="h-6 w-6" />
           {expanded && <span className="text-lg">BikeMaster</span>}
         </Link>
@@ -138,7 +138,7 @@ const Sidebar = ({ expanded = true }) => {
           ))}
         </div>
         <div className="mt-8">
-          <div className="px-4 text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+          <div className="px-4 text-xs font-semibold uppercase tracking-wider text-white/70 mb-2">
             {expanded && "Administração"}
           </div>
           <div className="px-4 space-y-1">
