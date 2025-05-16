@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import LoginForm from "@/components/auth/LoginForm";
 
 interface LoginPageProps {
-  onLogin: (email: string, password: string) => void;
+  onLogin: () => void;
 }
 
 const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {

@@ -1,25 +1,7 @@
-
-import React, { useState, useEffect } from "react";
-import { format, addMonths } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import React, { useState, useEffect } from 'react';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -28,856 +10,753 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { X, CalendarIcon } from "lucide-react";
+import { ServiceItem, ProductItem, PaymentMethodType } from "@/types";
+import { ServiceOrderProduct } from "@/data/serviceOrdersData";
+import { format, addMonths } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Plus, Trash } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Interfaces for select options
-export interface Customer {
-  id: number;
-  name: string;
-}
+// Tipos para o formulário de ordem de serviço
+export interface Service extends ServiceItem {}
 
-export interface Product {
-  id: string;
-  name: string;
-  price: number;
-}
-
-export interface ServiceOption {
-  id: string;
-  name: string;
-  price: number;
-}
-
-interface Technician {
-  id: number;
-  name: string;
-}
-
-interface PriorityOption {
-  value: string;
-  label: string;
-}
-
-// Payment method options
-const paymentMethodOptions = [
-  { value: "pix", label: "À vista: PIX" },
-  { value: "dinheiro", label: "À vista: Dinheiro" },
-  { value: "debito", label: "Débito" },
-  { value: "credito", label: "Crédito" },
-  { value: "crediario", label: "Crediário Loja" },
-];
-
-// Form schema
-const serviceOrderSchema = z.object({
-  customerId: z.number(),
-  bikeModel: z.string().min(3, "Informe o modelo da bicicleta"),
-  issueDescription: z.string().min(5, "Descreva o problema com mais detalhes"),
-  scheduledFor: z.date(),
-  priority: z.string(),
-  technicianId: z.number().optional(),
-  notes: z.string().optional(),
-  laborValue: z.number().min(0, "Valor não pode ser negativo").optional(),
-  paymentMethod: z.string().default("pix"),
-  installments: z.number().min(1, "Mínimo de uma parcela").optional(),
-  downPayment: z.number().min(0, "Valor não pode ser negativo").optional(),
-  firstInstallmentDate: z.date().optional(),
-});
-
-type ServiceOrderFormValues = z.infer<typeof serviceOrderSchema>;
+// Tipo de produto para ordem de serviço
+export interface Product extends ServiceOrderProduct {}
 
 interface ServiceOrderFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: any) => void;
-  customers: Customer[];
+  customers: Array<{ id: number, name: string }>;
+  serviceOptions: Service[];
   productOptions: Product[];
-  serviceOptions: ServiceOption[];
-  technicianOptions: Technician[];
-  priorityOptions: PriorityOption[];
+  technicianOptions: Array<{ id: number, name: string }>;
+  priorityOptions: Array<{ value: string, label: string }>;
 }
 
-const ServiceOrderForm = ({
+const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
   isOpen,
   onClose,
   onSubmit,
   customers,
-  productOptions,
   serviceOptions,
+  productOptions,
   technicianOptions,
   priorityOptions,
-}: ServiceOrderFormProps) => {
-  const [selectedServices, setSelectedServices] = useState<Array<ServiceOption & { editedPrice?: number }>>([]);
-  const [selectedProducts, setSelectedProducts] = useState<Array<{ product: Product, quantity: number, editedPrice?: number }>>([]);
-  const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
-  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
-  const [productQuantity, setProductQuantity] = useState<number>(1);
-  const [showInstallments, setShowInstallments] = useState(false);
-  const [installmentDates, setInstallmentDates] = useState<Array<{ date: Date; amount: number }>>([]);
-  const [activeTab, setActiveTab] = useState("details");
+}) => {
+  // Estado do formulário
+  const [formData, setFormData] = useState({
+    customer: "",
+    bikeModel: "",
+    issueDescription: "",
+    priority: "Normal",
+    technicianId: "",
+    scheduledFor: new Date().toISOString().split("T")[0],
+    notes: "",
+    services: [] as (Service & { customPrice?: number })[],
+    products: [] as (Product & { quantity: number, subtotal: number })[],
+    laborValue: 0,
+    paymentMethod: "Dinheiro" as PaymentMethodType,
+    downPayment: 0,
+    installments: 1,
+    installmentAmount: 0,
+    firstInstallmentDate: new Date().toISOString().split("T")[0],
+  });
+  
+  // Estado para campos temporários
+  const [selectedService, setSelectedService] = useState("");
+  const [selectedProduct, setSelectedProduct] = useState("");
+  const [serviceCustomPrice, setServiceCustomPrice] = useState<number | undefined>(undefined);
+  const [productQuantity, setProductQuantity] = useState(1);
+  const [productCustomPrice, setProductCustomPrice] = useState<number | undefined>(undefined);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
 
-  const form = useForm<ServiceOrderFormValues>({
-    resolver: zodResolver(serviceOrderSchema),
-    defaultValues: {
+  // Calcular valor da parcela quando dados relevantes mudam
+  useEffect(() => {
+    if (formData.paymentMethod === "Crediário Loja" && formData.installments > 0) {
+      const total = calculateTotal();
+      const remainingValue = total - (formData.downPayment || 0);
+      const installmentValue = remainingValue / formData.installments;
+      
+      setFormData({
+        ...formData,
+        installmentAmount: installmentValue > 0 ? installmentValue : 0
+      });
+    }
+  }, [formData.downPayment, formData.installments, formData.services, formData.products, formData.laborValue, formData.paymentMethod]);
+
+  // Handlers para campos de formulário
+  function handleChange(field: string, value: string | number) {
+    setFormData({ ...formData, [field]: value });
+  }
+
+  // Adicionar serviço
+  function handleAddService() {
+    if (!selectedService) return;
+    
+    const service = serviceOptions.find(s => s.name === selectedService);
+    if (service) {
+      const newServices = [...formData.services, { 
+        ...service,
+        customPrice: serviceCustomPrice !== undefined ? serviceCustomPrice : service.price
+      }];
+      setFormData({
+        ...formData,
+        services: newServices,
+      });
+      setSelectedService("");
+      setServiceCustomPrice(undefined);
+    }
+  }
+
+  // Adicionar produto
+  function handleAddProduct() {
+    if (!selectedProduct || productQuantity <= 0) return;
+    
+    const product = productOptions.find(p => p.name === selectedProduct);
+    if (product) {
+      const price = productCustomPrice !== undefined ? productCustomPrice : product.price;
+      const newProducts = [...formData.products, { 
+        ...product, 
+        price: price,
+        quantity: productQuantity,
+        subtotal: price * productQuantity
+      }];
+      setFormData({
+        ...formData,
+        products: newProducts,
+      });
+      setSelectedProduct("");
+      setProductQuantity(1);
+      setProductCustomPrice(undefined);
+    }
+  }
+
+  // Atualizar preço de serviço
+  function handleUpdateServicePrice(id: string | number, newPrice: number) {
+    const updatedServices = formData.services.map(service => {
+      if (service.id === id) {
+        return { ...service, customPrice: newPrice };
+      }
+      return service;
+    });
+    
+    setFormData({
+      ...formData,
+      services: updatedServices,
+    });
+  }
+
+  // Atualizar preço de produto
+  function handleUpdateProductPrice(id: number, newPrice: number) {
+    const updatedProducts = formData.products.map(product => {
+      if (product.id === id) {
+        return { 
+          ...product, 
+          price: newPrice,
+          subtotal: newPrice * product.quantity
+        };
+      }
+      return product;
+    });
+    
+    setFormData({
+      ...formData,
+      products: updatedProducts,
+    });
+  }
+
+  // Atualizar quantidade de produto
+  function handleUpdateProductQuantity(id: number, newQuantity: number) {
+    const updatedProducts = formData.products.map(product => {
+      if (product.id === id) {
+        return { 
+          ...product, 
+          quantity: newQuantity,
+          subtotal: product.price * newQuantity
+        };
+      }
+      return product;
+    });
+    
+    setFormData({
+      ...formData,
+      products: updatedProducts,
+    });
+  }
+
+  // Remover serviço
+  function handleRemoveService(id: string | number) {
+    setFormData({
+      ...formData,
+      services: formData.services.filter(s => s.id !== id),
+    });
+  }
+
+  // Remover produto
+  function handleRemoveProduct(id: number) {
+    setFormData({
+      ...formData,
+      products: formData.products.filter(p => p.id !== id),
+    });
+  }
+
+  // Calcular total
+  function calculateTotal() {
+    let servicesTotal = formData.services.reduce(
+      (sum, service) => sum + (service.customPrice !== undefined ? service.customPrice : service.price),
+      0
+    );
+    let productsTotal = formData.products.reduce(
+      (sum, product) => sum + (product.subtotal || 0),
+      0
+    );
+    // Adicionar o valor de mão de obra ao total
+    return servicesTotal + productsTotal + (formData.laborValue || 0);
+  }
+  
+  // Gerar as datas das parcelas
+  function generateInstallmentDates() {
+    const dates = [];
+    if (selectedDate && formData.installments > 0) {
+      for (let i = 0; i < formData.installments; i++) {
+        dates.push(format(addMonths(selectedDate, i), 'dd/MM/yyyy', { locale: ptBR }));
+      }
+    }
+    return dates;
+  }
+  
+  // Enviar formulário
+  function handleSubmit() {
+    if (!formData.customer || !formData.bikeModel || !formData.issueDescription) {
+      return;
+    }
+
+    const totalPrice = calculateTotal();
+    const firstInstallmentDate = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : undefined;
+
+    onSubmit({
+      ...formData,
+      totalPrice,
+      firstInstallmentDate,
+    });
+    
+    // Reset form
+    setFormData({
+      customer: "",
       bikeModel: "",
       issueDescription: "",
-      scheduledFor: new Date(),
       priority: "Normal",
+      technicianId: "",
+      scheduledFor: new Date().toISOString().split("T")[0],
       notes: "",
+      services: [],
+      products: [],
       laborValue: 0,
-      paymentMethod: "pix",
-      installments: 1,
+      paymentMethod: "Dinheiro",
       downPayment: 0,
-      firstInstallmentDate: new Date(),
-    },
-  });
-
-  // Watch payment method to show/hide installments section
-  const paymentMethod = form.watch("paymentMethod");
-  const downPayment = form.watch("downPayment") || 0;
-  const installments = form.watch("installments") || 1;
-  const firstInstallmentDate = form.watch("firstInstallmentDate");
-
-  // Watch for changes to update installment dates
-  useEffect(() => {
-    if (paymentMethod === "crediario" && firstInstallmentDate && installments > 0) {
-      const dates = [];
-      const amount = calculateInstallmentAmount();
-      
-      for (let i = 0; i < installments; i++) {
-        dates.push({
-          date: addMonths(firstInstallmentDate, i),
-          amount: amount
-        });
-      }
-      
-      setInstallmentDates(dates);
-    } else {
-      setInstallmentDates([]);
-    }
-  }, [paymentMethod, installments, firstInstallmentDate, downPayment]);
-
-  useEffect(() => {
-    setShowInstallments(paymentMethod === "crediario");
-  }, [paymentMethod]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      form.reset();
-      setSelectedServices([]);
-      setSelectedProducts([]);
-      setSelectedServiceId(null);
-      setSelectedProductId(null);
-      setProductQuantity(1);
-      setShowInstallments(false);
-      setInstallmentDates([]);
-      setActiveTab("details");
-    }
-  }, [isOpen, form]);
-
-  const addService = () => {
-    if (!selectedServiceId) return;
-    
-    const serviceToAdd = serviceOptions.find(s => s.id === selectedServiceId);
-    if (!serviceToAdd) return;
-    
-    if (!selectedServices.some(s => s.id === serviceToAdd.id)) {
-      setSelectedServices([...selectedServices, {
-        ...serviceToAdd,
-        editedPrice: serviceToAdd.price
-      }]);
-    }
-    
-    setSelectedServiceId(null);
+      installments: 1,
+      installmentAmount: 0,
+      firstInstallmentDate: new Date().toISOString().split("T")[0],
+    });
+    setSelectedDate(new Date());
   };
 
-  const removeService = (id: string) => {
-    setSelectedServices(selectedServices.filter(s => s.id !== id));
-  };
+  // Lista de métodos de pagamento
+  const paymentMethods: {value: PaymentMethodType, label: string}[] = [
+    { value: "Dinheiro", label: "À Vista: Dinheiro" },
+    { value: "PIX", label: "À Vista: PIX" },
+    { value: "Cartão de Débito", label: "Cartão de Débito" },
+    { value: "Cartão de Crédito", label: "Cartão de Crédito" },
+    { value: "Crediário Loja", label: "Crediário Loja" },
+  ];
 
-  const updateServicePrice = (id: string, price: number) => {
-    setSelectedServices(selectedServices.map(service => 
-      service.id === id ? { ...service, editedPrice: price } : service
-    ));
-  };
-
-  const addProduct = () => {
-    if (!selectedProductId || productQuantity <= 0) return;
-    
-    const productToAdd = productOptions.find(p => p.id === selectedProductId);
-    if (!productToAdd) return;
-    
-    const existingProduct = selectedProducts.findIndex(item => item.product.id === selectedProductId);
-    
-    if (existingProduct >= 0) {
-      const updatedProducts = [...selectedProducts];
-      updatedProducts[existingProduct].quantity += productQuantity;
-      setSelectedProducts(updatedProducts);
-    } else {
-      setSelectedProducts([
-        ...selectedProducts, 
-        { 
-          product: productToAdd, 
-          quantity: productQuantity,
-          editedPrice: productToAdd.price
-        }
-      ]);
-    }
-    
-    setSelectedProductId(null);
-    setProductQuantity(1);
-  };
-
-  const removeProduct = (id: string) => {
-    setSelectedProducts(selectedProducts.filter(item => item.product.id !== id));
-  };
-
-  const updateProductPrice = (id: string, price: number) => {
-    setSelectedProducts(selectedProducts.map(item => 
-      item.product.id === id ? { ...item, editedPrice: price } : item
-    ));
-  };
-
-  const calculateTotal = () => {
-    const servicesTotal = selectedServices.reduce((sum, service) => sum + (service.editedPrice || service.price), 0);
-    const productsTotal = selectedProducts.reduce(
-      (sum, item) => sum + ((item.editedPrice || item.product.price) * item.quantity), 0
-    );
-    const laborValue = form.watch("laborValue") || 0;
-    
-    return servicesTotal + productsTotal + laborValue;
-  };
-
-  const calculateInstallmentAmount = () => {
-    const total = calculateTotal();
-    const downPaymentValue = downPayment || 0;
-    const installmentCount = installments || 1;
-    
-    if (installmentCount <= 0) return 0;
-    return (total - downPaymentValue) / installmentCount;
-  };
-
-  const handleSubmit = (data: ServiceOrderFormValues) => {
-    const formattedServices = selectedServices.map(service => ({
-      id: service.id,
-      name: service.name,
-      price: service.editedPrice || service.price,
-    }));
-    
-    const formattedProducts = selectedProducts.map(item => ({
-      id: item.product.id,
-      name: item.product.name,
-      price: item.editedPrice || item.product.price,
-      quantity: item.quantity,
-      subtotal: (item.editedPrice || item.product.price) * item.quantity,
-    }));
-    
-    const totalPrice = calculateTotal();
-    const installmentAmount = calculateInstallmentAmount();
-    
-    const formData = {
-      ...data,
-      services: formattedServices,
-      products: formattedProducts,
-      totalPrice,
-      customer: customers.find(c => c.id === data.customerId),
-      technician: data.technicianId 
-        ? technicianOptions.find(t => t.id === data.technicianId)?.name 
-        : null,
-      installmentAmount: showInstallments ? installmentAmount : undefined,
-      installmentDates: showInstallments ? installmentDates : undefined,
-    };
-    
-    onSubmit(formData);
-  };
+  // Datas de parcelas
+  const installmentDates = generateInstallmentDates();
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto">
+      <DialogContent className="sm:max-w-2xl h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Nova Ordem de Serviço</DialogTitle>
         </DialogHeader>
-        
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="details">Detalhes</TabsTrigger>
-                <TabsTrigger value="items">Itens e Pagamento</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="details" className="space-y-4 pt-4">
-                <FormField
-                  control={form.control}
-                  name="customerId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Cliente</FormLabel>
-                      <Select 
-                        onValueChange={(value) => field.onChange(parseInt(value))}
-                        value={field.value ? field.value.toString() : undefined}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione um cliente" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {customers.map((customer) => (
-                            <SelectItem key={customer.id} value={customer.id.toString()}>
-                              {customer.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="bikeModel"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Modelo da Bicicleta</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Ex: Caloi 10" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="issueDescription"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Descrição do Problema</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Descreva o problema relatado pelo cliente"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="scheduledFor"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>Data Agendada</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant={"outline"}
-                                className={cn(
-                                  "pl-3 text-left font-normal",
-                                  !field.value && "text-muted-foreground"
-                                )}
-                              >
-                                {field.value ? (
-                                  format(field.value, "dd/MM/yyyy", {
-                                    locale: ptBR,
-                                  })
-                                ) : (
-                                  <span>Selecione uma data</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="priority"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Prioridade</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione a prioridade" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {priorityOptions.map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="customer">Cliente *</Label>
+              <Select 
+                value={formData.customer} 
+                onValueChange={(value) => handleChange("customer", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o cliente" />
+                </SelectTrigger>
+                <SelectContent>
+                  {customers.map((customer) => (
+                    <SelectItem key={customer.id} value={customer.name}>
+                      {customer.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="priority">Prioridade</Label>
+              <Select 
+                value={formData.priority} 
+                onValueChange={(value) => handleChange("priority", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {priorityOptions.map((priority) => (
+                    <SelectItem key={priority.value} value={priority.value}>
+                      {priority.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="bikeModel">Bicicleta (Marca/Modelo) *</Label>
+              <Input
+                id="bikeModel"
+                value={formData.bikeModel}
+                onChange={(e) => handleChange("bikeModel", e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="scheduledFor">Data Agendada</Label>
+              <Input
+                id="scheduledFor"
+                type="date"
+                value={formData.scheduledFor}
+                onChange={(e) => handleChange("scheduledFor", e.target.value)}
+              />
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="technicianId">Técnico Responsável</Label>
+            <Select 
+              value={formData.technicianId} 
+              onValueChange={(value) => handleChange("technicianId", value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um técnico" />
+              </SelectTrigger>
+              <SelectContent>
+                {technicianOptions.map((technician) => (
+                  <SelectItem key={technician.id} value={technician.id.toString()}>
+                    {technician.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="issueDescription">Descrição do Problema *</Label>
+            <Textarea
+              id="issueDescription"
+              value={formData.issueDescription}
+              onChange={(e) => handleChange("issueDescription", e.target.value)}
+              rows={3}
+            />
+          </div>
+
+          <div className="border-t pt-4">
+            <h3 className="font-medium mb-4">Serviços</h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div className="md:col-span-2">
+                <Label htmlFor="service" className="mb-2 block">
+                  Adicionar Serviço
+                </Label>
+                <Select
+                  value={selectedService}
+                  onValueChange={(value) => {
+                    setSelectedService(value);
+                    // Pré-preencher com o preço padrão do serviço selecionado
+                    const service = serviceOptions.find(s => s.name === value);
+                    if (service) {
+                      setServiceCustomPrice(service.price);
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um serviço" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {serviceOptions.map((service) => (
+                      <SelectItem key={service.id} value={service.name}>
+                        {service.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex gap-2 items-end">
+                <div className="flex-1">
+                  <Label htmlFor="servicePrice" className="mb-2 block">
+                    Valor (R$)
+                  </Label>
+                  <Input
+                    id="servicePrice"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={serviceCustomPrice === undefined ? "" : serviceCustomPrice}
+                    onChange={(e) => setServiceCustomPrice(parseFloat(e.target.value) || 0)}
                   />
                 </div>
-                
-                <FormField
-                  control={form.control}
-                  name="technicianId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Técnico Responsável</FormLabel>
-                      <Select 
-                        onValueChange={(value) => field.onChange(parseInt(value))}
-                        value={field.value ? field.value.toString() : undefined}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione um técnico" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="">Não atribuído</SelectItem>
-                          {technicianOptions.map((technician) => (
-                            <SelectItem key={technician.id} value={technician.id.toString()}>
-                              {technician.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Observações</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Observações adicionais sobre o serviço"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <div className="flex justify-end pt-4">
-                  <Button 
-                    type="button" 
-                    onClick={() => setActiveTab("items")}
-                    className="w-full sm:w-auto"
-                  >
-                    Continuar
-                  </Button>
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="items" className="space-y-4 pt-4">
-                {/* Services selection */}
-                <div className="space-y-2">
-                  <div className="font-medium">Serviços</div>
-                  
-                  <div className="flex gap-2">
-                    <Select value={selectedServiceId || ""} onValueChange={setSelectedServiceId}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Selecione um serviço" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {serviceOptions.map((service) => (
-                          <SelectItem key={service.id} value={service.id}>
-                            {service.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Button type="button" onClick={addService} variant="outline">
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  
-                  {selectedServices.length > 0 ? (
-                    <div className="border rounded-md">
-                      <table className="w-full">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Serviço
-                            </th>
-                            <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Valor
-                            </th>
-                            <th className="px-3 py-2 w-12"></th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200">
-                          {selectedServices.map((service) => (
-                            <tr key={service.id}>
-                              <td className="px-3 py-2">{service.name}</td>
-                              <td className="px-3 py-2 text-right">
-                                <Input 
-                                  type="number"
-                                  min="0"
-                                  step="0.01"
-                                  className="w-28 ml-auto text-right"
-                                  value={service.editedPrice || service.price}
-                                  onChange={(e) => updateServicePrice(service.id, parseFloat(e.target.value) || service.price)}
-                                />
-                              </td>
-                              <td className="px-3 py-2">
-                                <Button 
-                                  type="button" 
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => removeService(service.id)}
-                                >
-                                  <Trash className="h-4 w-4 text-red-500" />
-                                </Button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  ) : (
-                    <div className="text-sm text-gray-500 italic">
-                      Nenhum serviço adicionado
-                    </div>
-                  )}
-                </div>
-                
-                {/* Products selection */}
-                <div className="space-y-2">
-                  <div className="font-medium">Peças</div>
-                  
-                  <div className="flex gap-2">
-                    <Select value={selectedProductId || ""} onValueChange={setSelectedProductId}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Selecione uma peça" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {productOptions.map((product) => (
-                          <SelectItem key={product.id} value={product.id}>
-                            {product.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Input 
-                      type="number" 
-                      min="1"
-                      className="w-20" 
-                      value={productQuantity}
-                      onChange={(e) => setProductQuantity(parseInt(e.target.value) || 1)}
-                    />
-                    <Button type="button" onClick={addProduct} variant="outline">
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  
-                  {selectedProducts.length > 0 ? (
-                    <div className="border rounded-md">
-                      <table className="w-full">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Peça
-                            </th>
-                            <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Qtd
-                            </th>
-                            <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Valor Unit.
-                            </th>
-                            <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Subtotal
-                            </th>
-                            <th className="px-3 py-2 w-12"></th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200">
-                          {selectedProducts.map((item) => (
-                            <tr key={item.product.id}>
-                              <td className="px-3 py-2">{item.product.name}</td>
-                              <td className="px-3 py-2 text-right">{item.quantity}</td>
-                              <td className="px-3 py-2 text-right">
-                                <Input 
-                                  type="number"
-                                  min="0"
-                                  step="0.01"
-                                  className="w-28 ml-auto text-right"
-                                  value={item.editedPrice || item.product.price}
-                                  onChange={(e) => updateProductPrice(item.product.id, parseFloat(e.target.value) || item.product.price)}
-                                />
-                              </td>
-                              <td className="px-3 py-2 text-right">
-                                {new Intl.NumberFormat('pt-BR', {
-                                  style: 'currency',
-                                  currency: 'BRL'
-                                }).format((item.editedPrice || item.product.price) * item.quantity)}
-                              </td>
-                              <td className="px-3 py-2">
-                                <Button 
-                                  type="button" 
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => removeProduct(item.product.id)}
-                                >
-                                  <Trash className="h-4 w-4 text-red-500" />
-                                </Button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  ) : (
-                    <div className="text-sm text-gray-500 italic">
-                      Nenhuma peça adicionada
-                    </div>
-                  )}
-                </div>
-                
-                <FormField
-                  control={form.control}
-                  name="laborValue"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Valor da Mão de Obra</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          {...field}
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <div className="py-2 border-t">
-                  <div className="flex justify-between items-center mb-4">
-                    <div className="font-medium">Total:</div>
-                    <div className="font-bold text-lg">
-                      {new Intl.NumberFormat('pt-BR', {
-                        style: 'currency',
-                        currency: 'BRL'
-                      }).format(calculateTotal())}
-                    </div>
-                  </div>
-                  
-                  {/* Payment method */}
-                  <div className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="paymentMethod"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Forma de Pagamento</FormLabel>
-                          <Select
-                            value={field.value}
-                            onValueChange={field.onChange}
+                <Button type="button" onClick={handleAddService} className="whitespace-nowrap">
+                  Adicionar
+                </Button>
+              </div>
+            </div>
+
+            {formData.services.length > 0 ? (
+              <div className="border rounded-md overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Serviço</TableHead>
+                      <TableHead className="text-right">Valor (R$)</TableHead>
+                      <TableHead className="w-10"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {formData.services.map((service) => (
+                      <TableRow key={service.id}>
+                        <TableCell>{service.name}</TableCell>
+                        <TableCell className="text-right">
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={service.customPrice !== undefined ? service.customPrice : service.price}
+                            onChange={(e) => handleUpdateServicePrice(service.id, parseFloat(e.target.value) || 0)}
+                            className="w-24 inline-block text-right"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleRemoveService(service.id)}
+                            className="h-8 w-8"
                           >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecione a forma de pagamento" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {paymentMethodOptions.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
-                                  {option.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <div className="text-center p-4 bg-gray-50 border rounded-md text-gray-500">
+                Nenhum serviço adicionado
+              </div>
+            )}
+          </div>
+
+          <div className="border-t pt-4">
+            <h3 className="font-medium mb-4">Peças e Produtos</h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
+              <div className="md:col-span-2">
+                <Label htmlFor="product" className="mb-2 block">
+                  Adicionar Produto
+                </Label>
+                <Select
+                  value={selectedProduct}
+                  onValueChange={(value) => {
+                    setSelectedProduct(value);
+                    // Pré-preencher com o preço padrão do produto selecionado
+                    const product = productOptions.find(p => p.name === value);
+                    if (product) {
+                      setProductCustomPrice(product.price);
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um produto" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {productOptions.map((product) => (
+                      <SelectItem key={product.id} value={product.name}>
+                        {product.name} {product.stock && `(Estoque: ${product.stock})`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="quantity" className="mb-2 block">
+                  Qtd
+                </Label>
+                <Input
+                  type="number"
+                  min="1"
+                  id="quantity"
+                  value={productQuantity}
+                  onChange={(e) => setProductQuantity(parseInt(e.target.value) || 1)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="productPrice" className="mb-2 block">
+                  Valor (R$)
+                </Label>
+                <Input
+                  id="productPrice"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={productCustomPrice === undefined ? "" : productCustomPrice}
+                  onChange={(e) => setProductCustomPrice(parseFloat(e.target.value) || 0)}
+                />
+              </div>
+              <div className="flex items-end">
+                <Button type="button" onClick={handleAddProduct} className="w-full">
+                  Adicionar
+                </Button>
+              </div>
+            </div>
+
+            {formData.products.length > 0 ? (
+              <div className="border rounded-md overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Produto</TableHead>
+                      <TableHead className="w-20 text-center">Qtd</TableHead>
+                      <TableHead className="text-right">Valor Unit. (R$)</TableHead>
+                      <TableHead className="text-right">Total (R$)</TableHead>
+                      <TableHead className="w-10"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {formData.products.map((product) => (
+                      <TableRow key={product.id}>
+                        <TableCell>{product.name}</TableCell>
+                        <TableCell className="text-center">
+                          <Input
+                            type="number"
+                            min="1"
+                            value={product.quantity}
+                            onChange={(e) => handleUpdateProductQuantity(product.id, parseInt(e.target.value) || 1)}
+                            className="w-16 inline-block text-center"
+                          />
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={product.price}
+                            onChange={(e) => handleUpdateProductPrice(product.id, parseFloat(e.target.value) || 0)}
+                            className="w-24 inline-block text-right"
+                          />
+                        </TableCell>
+                        <TableCell className="text-right font-medium">
+                          {product.subtotal.toFixed(2)}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleRemoveProduct(product.id)}
+                            className="h-8 w-8"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <div className="text-center p-4 bg-gray-50 border rounded-md text-gray-500">
+                Nenhum produto adicionado
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-2 border-t pt-4">
+            <Label htmlFor="laborValue">Valor de Mão de Obra (R$)</Label>
+            <Input
+              id="laborValue"
+              type="number"
+              step="0.01"
+              min="0"
+              value={formData.laborValue}
+              onChange={(e) => handleChange("laborValue", parseFloat(e.target.value) || 0)}
+              className="w-full"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="notes">Observações</Label>
+            <Textarea
+              id="notes"
+              value={formData.notes}
+              onChange={(e) => handleChange("notes", e.target.value)}
+              rows={2}
+            />
+          </div>
+
+          <div className="mt-4 bg-gray-50 p-4 rounded-md">
+            <div className="flex justify-between items-center text-lg font-semibold">
+              <span>Total:</span>
+              <span>R$ {calculateTotal().toFixed(2)}</span>
+            </div>
+          </div>
+
+          {/* Nova seção de forma de pagamento */}
+          <div className="border-t pt-4 space-y-4">
+            <h3 className="font-medium">Forma de Pagamento</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="paymentMethod">Método de Pagamento</Label>
+                <Select
+                  value={formData.paymentMethod}
+                  onValueChange={(value: PaymentMethodType) => handleChange("paymentMethod", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a forma de pagamento" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {paymentMethods.map((method) => (
+                      <SelectItem key={method.value} value={method.value}>
+                        {method.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Campos adicionais para crediário */}
+            {formData.paymentMethod === "Crediário Loja" && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="downPayment">Valor da Entrada (R$)</Label>
+                    <Input
+                      id="downPayment"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.downPayment}
+                      onChange={(e) => handleChange("downPayment", parseFloat(e.target.value) || 0)}
                     />
-                    
-                    {showInstallments && (
-                      <div className="space-y-4 border-t border-gray-200 pt-4">
-                        <FormField
-                          control={form.control}
-                          name="downPayment"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Valor de Entrada</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  type="number"
-                                  min="0"
-                                  step="0.01"
-                                  {...field}
-                                  onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="installments"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Quantidade de Parcelas</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  type="number"
-                                  min="1"
-                                  max="12"
-                                  {...field}
-                                  onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="firstInstallmentDate"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Data da Primeira Parcela</FormLabel>
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <FormControl>
-                                    <Button
-                                      variant={"outline"}
-                                      className={cn(
-                                        "w-full pl-3 text-left font-normal",
-                                        !field.value && "text-muted-foreground"
-                                      )}
-                                    >
-                                      {field.value ? (
-                                        format(field.value, "dd/MM/yyyy", {
-                                          locale: ptBR,
-                                        })
-                                      ) : (
-                                        <span>Selecione uma data</span>
-                                      )}
-                                      <CalendarIcon className="ml-auto h-4 w-4" />
-                                    </Button>
-                                  </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                  <Calendar
-                                    mode="single"
-                                    selected={field.value}
-                                    onSelect={field.onChange}
-                                    initialFocus
-                                  />
-                                </PopoverContent>
-                              </Popover>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <div className="py-2 flex justify-between items-center">
-                          <div>Valor da Parcela:</div>
-                          <div className="font-medium">
-                            {new Intl.NumberFormat('pt-BR', {
-                              style: 'currency',
-                              currency: 'BRL'
-                            }).format(calculateInstallmentAmount())} x {installments}
-                          </div>
-                        </div>
-                        
-                        {installmentDates.length > 0 && (
-                          <div className="mt-4">
-                            <div className="font-medium mb-2">Datas das Parcelas:</div>
-                            <div className="border rounded-md">
-                              <table className="w-full">
-                                <thead className="bg-gray-50">
-                                  <tr>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                      Parcela
-                                    </th>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                      Data de Vencimento
-                                    </th>
-                                    <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                      Valor
-                                    </th>
-                                  </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-200">
-                                  {installmentDates.map((item, index) => (
-                                    <tr key={index}>
-                                      <td className="px-4 py-2">{index + 1}/{installments}</td>
-                                      <td className="px-4 py-2">
-                                        {format(item.date, "dd/MM/yyyy", { locale: ptBR })}
-                                      </td>
-                                      <td className="px-4 py-2 text-right">
-                                        {new Intl.NumberFormat('pt-BR', {
-                                          style: 'currency',
-                                          currency: 'BRL'
-                                        }).format(item.amount)}
-                                      </td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="installments">Quantidade de Parcelas</Label>
+                    <Input
+                      id="installments"
+                      type="number"
+                      min="1"
+                      max="12"
+                      value={formData.installments}
+                      onChange={(e) => handleChange("installments", parseInt(e.target.value) || 1)}
+                    />
                   </div>
                 </div>
-                
-                <div className="flex justify-between pt-4">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => setActiveTab("details")}
-                  >
-                    Voltar
-                  </Button>
-                  <Button type="submit">Salvar</Button>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="installmentValue">Valor da Parcela (R$)</Label>
+                    <Input
+                      id="installmentValue"
+                      type="number"
+                      step="0.01"
+                      value={formData.installmentAmount.toFixed(2)}
+                      disabled
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Data da Primeira Parcela</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start text-left font-normal"
+                        >
+                          {selectedDate ? (
+                            format(selectedDate, 'dd/MM/yyyy', { locale: ptBR })
+                          ) : (
+                            <span>Selecione uma data</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={selectedDate}
+                          onSelect={setSelectedDate}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
                 </div>
-              </TabsContent>
-            </Tabs>
-          </form>
-        </Form>
+
+                {/* Exibir as datas das parcelas */}
+                {installmentDates.length > 0 && (
+                  <div className="space-y-2 mt-4">
+                    <Label>Datas das Parcelas:</Label>
+                    <div className="grid grid-cols-3 gap-2 border rounded-md p-2">
+                      {installmentDates.map((date, index) => (
+                        <div key={index} className="text-sm">
+                          <span className="font-medium">{index + 1}ª:</span> {date}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button onClick={handleSubmit}>
+            Criar Ordem de Serviço
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

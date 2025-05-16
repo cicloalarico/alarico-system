@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import ServiceOrderHeader from "@/components/service-orders/ServiceOrderHeader";
 import ServiceOrdersFilter from "@/components/service-orders/ServiceOrdersFilter";
 import ServiceOrdersList from "@/components/service-orders/ServiceOrdersList";
@@ -7,11 +7,13 @@ import ServiceOrderForm from "@/components/service-orders/ServiceOrderForm";
 import ServiceOrderDetails from "@/components/service-orders/ServiceOrderDetails";
 import { useServiceOrders } from "@/hooks/useServiceOrders";
 import { useServiceOrdersFilter } from "@/hooks/useServiceOrdersFilter";
-import { priorityOptions } from "@/data/serviceOrdersData";
-import { useCustomers } from "@/hooks/useCustomers";
-import { useProducts } from "@/hooks/useProducts";
-import { useServices } from "@/hooks/useServices";
-import { Product as FormProduct } from "@/components/service-orders/ServiceOrderForm";
+import { 
+  customerOptions,
+  serviceOptions,
+  productOptions,
+  technicianOptions,
+  priorityOptions
+} from "@/data/serviceOrdersData";
 
 const ServiceOrders = () => {
   const {
@@ -26,17 +28,6 @@ const ServiceOrders = () => {
     handleUpdateStatus
   } = useServiceOrders();
 
-  const { customers, fetchCustomers } = useCustomers();
-  const { products, fetchProducts } = useProducts();
-  const { services, fetchServices } = useServices();
-  
-  // Get technicians from the database (in a real app)
-  const [technicianOptions, setTechnicianOptions] = useState([
-    { id: 1, name: "João Silva" },
-    { id: 2, name: "Maria Santos" },
-    { id: 3, name: "Carlos Oliveira" }
-  ]);
-
   const {
     searchTerm,
     setSearchTerm,
@@ -44,19 +35,6 @@ const ServiceOrders = () => {
     setActiveTab,
     filteredServiceOrders
   } = useServiceOrdersFilter(serviceOrders);
-
-  useEffect(() => {
-    fetchCustomers();
-    fetchProducts();
-    fetchServices();
-  }, []);
-
-  // Convert products for the service order form, ensuring IDs are strings
-  const formattedProducts: FormProduct[] = products.map(product => ({
-    id: product.id.toString(), // Convert id to string
-    name: product.name,
-    price: product.price || 0,
-  }));
 
   return (
     <div className="space-y-6">
@@ -81,9 +59,9 @@ const ServiceOrders = () => {
         isOpen={isAddDialogOpen}
         onClose={() => setIsAddDialogOpen(false)}
         onSubmit={handleCreateServiceOrder}
-        customers={customers}
-        serviceOptions={services}
-        productOptions={formattedProducts}
+        customers={customerOptions}
+        serviceOptions={serviceOptions}
+        productOptions={productOptions}
         technicianOptions={technicianOptions}
         priorityOptions={priorityOptions}
       />

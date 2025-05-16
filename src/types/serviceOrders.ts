@@ -6,7 +6,7 @@ export type ServiceStatusType = 'Aberta' | 'Em andamento' | 'Aguardando peças' 
 
 export interface ServiceOrder {
   id: string;
-  customer: string | { id: number; name: string };
+  customer: string;
   bikeModel: string;
   issueDescription: string;
   status: ServiceStatusType;

@@ -1,157 +1,150 @@
 
-import React from "react";
-import { cn } from "@/lib/utils";
 import { Link, useLocation } from "react-router-dom";
+
+import { cn } from "@/lib/utils";
 import {
-  BarChart2,
-  Calendar,
-  ClipboardList,
-  CreditCard,
-  FileText,
-  Home,
+  BarChart,
+  Users,
   Package,
-  Settings,
   ShoppingCart,
   Wrench,
-  Truck,
-  Users,
-  Wallet,
+  CreditCard,
+  Receipt,
+  Calendar as CalendarIcon,
+  BarChart3,
+  Settings,
+  FileText,
 } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
-const Sidebar = ({ expanded = true }) => {
-  const location = useLocation();
-  const pathName = location.pathname;
+const Sidebar = ({ expanded }: { expanded: boolean }) => {
+  const { pathname } = useLocation();
+  const isMobile = useIsMobile();
 
-  const mainLinks = [
+  // Define the navigation items
+  const navItems = [
     {
-      name: "Dashboard",
+      title: "Dashboard",
       href: "/",
-      icon: <Home className="mr-2 h-4 w-4" />,
+      icon: BarChart,
     },
     {
-      name: "Calendário",
-      href: "/calendar",
-      icon: <Calendar className="mr-2 h-4 w-4" />,
-    },
-    {
-      name: "Clientes",
+      title: "Clientes",
       href: "/customers",
-      icon: <Users className="mr-2 h-4 w-4" />,
+      icon: Users,
     },
     {
-      name: "Produtos",
+      title: "Produtos",
       href: "/products",
-      icon: <Package className="mr-2 h-4 w-4" />,
+      icon: Package,
     },
     {
-      name: "Serviços",
-      href: "/services",
-      icon: <Wrench className="mr-2 h-4 w-4" />,
-    },
-    {
-      name: "Ordens de Serviço",
-      href: "/service-orders",
-      icon: <Wrench className="mr-2 h-4 w-4" />,
-    },
-    {
-      name: "Vendas",
-      href: "/sales",
-      icon: <ShoppingCart className="mr-2 h-4 w-4" />,
-    },
-    {
-      name: "Estoque",
+      title: "Estoque",
       href: "/inventory",
-      icon: <Truck className="mr-2 h-4 w-4" />,
+      icon: ShoppingCart,
     },
     {
-      name: "Financeiro",
+      title: "Ordens de Serviço",
+      href: "/services",
+      icon: Wrench,
+    },
+    {
+      title: "Vendas",
+      href: "/sales",
+      icon: ShoppingCart,
+    },
+    {
+      title: "Financeiro",
       href: "/financial",
-      icon: <Wallet className="mr-2 h-4 w-4" />,
+      icon: CreditCard,
     },
     {
-      name: "Contas",
+      title: "Contas a Pagar",
       href: "/bills",
-      icon: <CreditCard className="mr-2 h-4 w-4" />,
+      icon: Receipt,
     },
     {
-      name: "Relatórios",
+      title: "Agenda",
+      href: "/calendar",
+      icon: CalendarIcon,
+    },
+    {
+      title: "Relatórios",
       href: "/reports",
-      icon: <BarChart2 className="mr-2 h-4 w-4" />,
+      icon: BarChart3,
     },
-  ];
-
-  const secondaryLinks = [
     {
-      name: "Usuários",
+      title: "Usuários",
       href: "/users",
-      icon: <Users className="mr-2 h-4 w-4" />,
+      icon: Users,
     },
     {
-      name: "Configurações",
+      title: "Configurações",
       href: "/settings",
-      icon: <Settings className="mr-2 h-4 w-4" />,
+      icon: Settings,
     },
   ];
 
-  const NavLink = ({
-    href,
-    children,
-    className,
-  }: {
-    href: string;
-    children: React.ReactNode;
-    className?: string;
-  }) => {
-    const isActive = pathName === href;
-
-    return (
-      <Link
-        to={href}
-        className={cn(
-          "flex items-center rounded-lg px-3 py-2 text-sm transition-all",
-          isActive
-            ? "bg-shop-dark text-white"
-            : "text-white hover:bg-shop-dark hover:text-white",
-          className
-        )}
-      >
-        {children}
-      </Link>
-    );
-  };
+  if (isMobile) {
+    return null;
+  }
 
   return (
-    <aside className={`${expanded ? 'w-64' : 'w-20'} hidden lg:flex h-screen flex-col border-r bg-shop-primary transition-all duration-300`}>
-      <div className="flex h-14 items-center border-b border-shop-dark px-4">
-        <Link to="/" className="flex items-center gap-2 font-semibold text-white">
-          <ClipboardList className="h-6 w-6" />
-          {expanded && <span className="text-lg">BikeMaster</span>}
-        </Link>
+    <div
+      className={cn(
+        "hidden md:flex flex-col border-r transition-all duration-300 bg-shop-primary text-white",
+        expanded ? "w-56" : "w-16"
+      )}
+    >
+      <div className="p-4 h-16 flex items-center border-b border-shop-dark">
+        <h1
+          className={cn(
+            "font-bold overflow-hidden transition-all duration-300 text-white",
+            expanded ? "w-56 opacity-100" : "w-0 opacity-0"
+          )}
+        >
+          Ciclo Alarico
+        </h1>
+        <img
+          src="/favicon.ico"
+          alt="Logo"
+          className={cn(
+            "h-8 w-8 transition-all duration-300",
+            expanded ? "opacity-0 w-0" : "opacity-100"
+          )}
+        />
       </div>
-      <nav className="flex-1 overflow-auto py-4">
-        <div className="px-4 space-y-1">
-          {mainLinks.map((link) => (
-            <NavLink key={link.name} href={link.href}>
-              {link.icon}
-              {expanded && link.name}
-            </NavLink>
-          ))}
-        </div>
-        <div className="mt-8">
-          <div className="px-4 text-xs font-semibold uppercase tracking-wider text-white/70 mb-2">
-            {expanded && "Administração"}
-          </div>
-          <div className="px-4 space-y-1">
-            {secondaryLinks.map((link) => (
-              <NavLink key={link.name} href={link.href}>
-                {link.icon}
-                {expanded && link.name}
-              </NavLink>
-            ))}
-          </div>
-        </div>
-      </nav>
-    </aside>
+
+      <div className="py-4 flex-1">
+        <nav className="px-2 space-y-1">
+          {navItems.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                to={item.href}
+                className={cn(
+                  "flex items-center py-2 px-3 rounded-lg text-sm font-medium hover:bg-shop-dark",
+                  isActive
+                    ? "bg-shop-dark text-white"
+                    : "text-white hover:text-white"
+                )}
+              >
+                <item.icon className={cn("h-5 w-5")} />
+                <span
+                  className={cn(
+                    "ml-3 whitespace-nowrap transition-all duration-300",
+                    expanded ? "opacity-100" : "w-0 opacity-0"
+                  )}
+                >
+                  {item.title}
+                </span>
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+    </div>
   );
 };
 

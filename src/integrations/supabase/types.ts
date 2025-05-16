@@ -661,36 +661,6 @@ export type Database = {
           },
         ]
       }
-      services: {
-        Row: {
-          active: boolean
-          category: string | null
-          created_at: string | null
-          description: string | null
-          id: number
-          name: string
-          price: number
-        }
-        Insert: {
-          active?: boolean
-          category?: string | null
-          created_at?: string | null
-          description?: string | null
-          id?: number
-          name: string
-          price?: number
-        }
-        Update: {
-          active?: boolean
-          category?: string | null
-          created_at?: string | null
-          description?: string | null
-          id?: number
-          name?: string
-          price?: number
-        }
-        Relationships: []
-      }
       stock_movements: {
         Row: {
           created_at: string | null
