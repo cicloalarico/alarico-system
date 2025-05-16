@@ -52,7 +52,7 @@ const formSchema = z.object({
   date: z.date(),
   dueDate: z.date().optional().nullable(),
   paymentMethod: z.string(),
-  status: z.enum(["pago", "pendente", "cancelado"]),
+  status: z.enum(["pago", "pendente", "atrasado", "cancelado"]),
   relatedId: z.string().optional(),
   notes: z.string().optional(),
 });

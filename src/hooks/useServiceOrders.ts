@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { ServiceOrder, ServiceItem, ProductItem, ServiceStatusType, PriorityType } from '@/types';
 import { PaymentMethodType, TransactionStatusType } from '@/types/common';
-import { FinancialTransaction, TransactionType } from '@/types/financial';
+import { FinancialTransaction } from '@/types/financial';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { technicianOptions, initialServiceOrders } from '@/data/serviceOrdersData';
@@ -327,18 +327,27 @@ export const useServiceOrders = () => {
         ? (orderData.priority as PriorityType) 
         : "Normal";
 
+      // We need a variable to hold the new order before inserting
+      const customerId = typeof orderData.customer === 'object' && orderData.customer !== null 
+        ? orderData.customer.id 
+        : parseInt(orderData.customer as unknown as string, 10);
+        
+      const technicianId = orderData.technician 
+        ? parseInt(orderData.technician.toString()) 
+        : null;
+
       // Inserir a ordem de serviço
       const { data: orderData2, error: orderError } = await supabase
         .from('service_orders')
         .insert({
           id: orderId,
-          customer_id: orderData.customerId,
+          customer_id: customerId,
           bike_model: orderData.bikeModel,
           issue_description: orderData.issueDescription,
           status: "Aberta",
           priority: priority,
           scheduled_for: orderData.scheduledFor,
-          technician_id: orderData.technicianId ? parseInt(orderData.technicianId) : null,
+          technician_id: technicianId,
           total_price: orderData.totalPrice,
           notes: orderData.notes,
           labor_value: orderData.laborValue || 0,
@@ -385,10 +394,9 @@ export const useServiceOrders = () => {
 
         // Atualizar estoque dos produtos
         for (const product of productsToInsert) {
-          // Using direct update with decrement_stock function
           const { error: updateError } = await supabase
             .from('products')
-            .update({ stock: supabase.rpc('decrement_stock', { product_id: product.product_id, amount: product.quantity }) })
+            .update({ stock: supabase.rpc('decrement_stock', { amount: product.quantity, product_id: product.product_id }) })
             .eq('id', product.product_id);
 
           if (updateError) {
@@ -399,7 +407,7 @@ export const useServiceOrders = () => {
       }
 
       // Criar a ordem de serviço formatada
-      const newOrderData: ServiceOrder = {
+      const newOrder: ServiceOrder = {
         id: orderId,
         customer: orderData.customer,
         bikeModel: orderData.bikeModel,
@@ -409,7 +417,7 @@ export const useServiceOrders = () => {
         createdAt: new Date().toISOString().split('T')[0],
         scheduledFor: orderData.scheduledFor,
         completedAt: null,
-        technician: orderData.technicianId ? technicianOptions.find(t => t.id === parseInt(orderData.technicianId))?.name || null : null,
+        technician: orderData.technician ? technicianOptions.find(t => t.id === parseInt(orderData.technician!.toString()))?.name || null : null,
         services: orderData.services ? orderData.services.map((s: any) => ({ ...s, id: String(s.id) })) : [],
         products: orderData.products,
         totalPrice: orderData.totalPrice,
@@ -419,27 +427,25 @@ export const useServiceOrders = () => {
         downPayment: orderData.downPayment,
         installments: orderData.installments,
         installmentAmount: orderData.installmentAmount,
-        firstInstallmentDate: orderData.firstInstallmentDate,
-        customerId: orderData.customerId,  // Adding this to support the ServiceOrder type
-        technicianId: orderData.technicianId  // Adding this to support the ServiceOrder type
+        firstInstallmentDate: orderData.firstInstallmentDate
       };
 
-      setServiceOrders([...serviceOrders, newOrderData]);
+      setServiceOrders([...serviceOrders, newOrder]);
       setIsAddDialogOpen(false);
       
       // Gerar as transações financeiras
-      const transactions = await generateFinancialTransactions(newOrderData);
+      const transactions = await generateFinancialTransactions(newOrder);
       
       toast({
         title: "Ordem de serviço criada",
-        description: `OS ${newOrderData.id} foi criada com sucesso.`,
+        description: `OS ${newOrder.id} foi criada com sucesso.`,
       });
       
       // Mostra uma mensagem adicional se foram criadas parcelas a receber
       if (transactions.length > 1) {
         toast({
           title: "Parcelas a receber criadas",
-          description: `Foram geradas ${transactions.length - (newOrderData.downPayment ? 1 : 0)} parcelas no financeiro.`,
+          description: `Foram geradas ${transactions.length - (newOrder.downPayment ? 1 : 0)} parcelas no financeiro.`,
         });
       }
 
