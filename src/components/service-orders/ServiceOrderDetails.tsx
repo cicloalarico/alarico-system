@@ -59,7 +59,7 @@ const ServiceOrderDetails = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-auto">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-auto">
         <DialogHeader>
           <DialogTitle>Detalhes da Ordem de Serviço</DialogTitle>
         </DialogHeader>
