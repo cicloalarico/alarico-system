@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { Sale, SaleCreate, SaleItem, SaleItemCreate, SaleStatusType } from '@/types';
@@ -121,9 +122,15 @@ export const useSales = () => {
 
       // Atualizar o estoque dos produtos
       for (const item of saleData.items) {
+        // Execute direct update instead of using rpc with return value
         const { error: updateError } = await supabase
           .from('products')
-          .update({ stock: supabase.rpc('decrement_stock', { amount: item.quantity, product_id: item.productId }) })
+          .update({ 
+            stock: supabase.rpc('decrement_stock', { 
+              product_id: item.productId, 
+              amount: item.quantity 
+            })
+          })
           .eq('id', item.productId);
 
         if (updateError) {
@@ -221,9 +228,15 @@ export const useSales = () => {
 
       // Atualizar o estoque dos produtos (devolver ao estoque)
       for (const item of items) {
+        // Execute direct update instead of using rpc with return value
         const { error: updateError } = await supabase
           .from('products')
-          .update({ stock: supabase.rpc('increment_stock', { amount: item.quantity, product_id: item.productId }) })
+          .update({ 
+            stock: supabase.rpc('increment_stock', { 
+              product_id: item.product_id, 
+              amount: item.quantity 
+            })
+          })
           .eq('id', item.product_id);
 
         if (updateError) {

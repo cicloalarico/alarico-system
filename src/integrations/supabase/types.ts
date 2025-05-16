@@ -788,6 +788,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      decrement_stock: {
+        Args: { product_id: number; amount: number }
+        Returns: number
+      }
       generate_appointment_id: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -807,6 +811,10 @@ export type Database = {
       generate_service_order_id: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      increment_stock: {
+        Args: { product_id: number; amount: number }
+        Returns: number
       }
     }
     Enums: {

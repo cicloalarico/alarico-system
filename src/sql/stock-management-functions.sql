@@ -7,7 +7,13 @@ AS $$
 DECLARE
   current_stock INTEGER;
 BEGIN
+  -- Get current stock
   SELECT stock INTO current_stock FROM products WHERE id = product_id;
+  
+  -- Update the stock
+  UPDATE products SET stock = GREATEST(0, current_stock - amount) WHERE id = product_id;
+  
+  -- Return new stock value
   RETURN GREATEST(0, current_stock - amount);
 END;
 $$;
@@ -20,7 +26,13 @@ AS $$
 DECLARE
   current_stock INTEGER;
 BEGIN
+  -- Get current stock
   SELECT stock INTO current_stock FROM products WHERE id = product_id;
+  
+  -- Update the stock
+  UPDATE products SET stock = current_stock + amount WHERE id = product_id;
+  
+  -- Return new stock value
   RETURN current_stock + amount;
 END;
 $$;

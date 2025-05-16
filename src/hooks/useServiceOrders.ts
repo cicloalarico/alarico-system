@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { ServiceOrder, ServiceItem, ProductItem, ServiceStatusType, PriorityType } from '@/types';
 import { PaymentMethodType, TransactionStatusType } from '@/types/common';
@@ -329,7 +328,7 @@ export const useServiceOrders = () => {
 
       // We need a variable to hold the new order before inserting
       const customerId = typeof orderData.customer === 'object' && orderData.customer !== null 
-        ? orderData.customer.id 
+        ? (orderData.customer as any).id 
         : parseInt(orderData.customer as unknown as string, 10);
         
       const technicianId = orderData.technician 
@@ -394,9 +393,15 @@ export const useServiceOrders = () => {
 
         // Atualizar estoque dos produtos
         for (const product of productsToInsert) {
+          // Execute direct update instead of using rpc with return value
           const { error: updateError } = await supabase
             .from('products')
-            .update({ stock: supabase.rpc('decrement_stock', { amount: product.quantity, product_id: product.product_id }) })
+            .update({ 
+              stock: supabase.rpc('decrement_stock', { 
+                product_id: product.product_id, 
+                amount: product.quantity 
+              })
+            })
             .eq('id', product.product_id);
 
           if (updateError) {
