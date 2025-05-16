@@ -1,16 +1,11 @@
-
 import { useState, useEffect } from 'react';
-import { useToast } from "@/hooks/use-toast";
-import { 
-  ServiceOrder, 
-  ServiceStatusType, 
-  PriorityType, 
-  PaymentMethodType 
-} from '@/types';
-import { FinancialTransaction } from '@/types/financial';
+import { ServiceOrder, ServiceItem, ProductItem, ServiceStatusType, PriorityType, 
+  PaymentMethodType } from '@/types';
+import { FinancialTransaction, TransactionType } from '@/types/financial';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { technicianOptions, initialServiceOrders } from '@/data/serviceOrdersData';
 import { format, addMonths } from 'date-fns';
-import { supabase } from '@/integrations/supabase/client';
 
 export const useServiceOrders = () => {
   const { toast } = useToast();
@@ -315,7 +310,7 @@ export const useServiceOrders = () => {
   };
 
   // Manipular criação de uma nova ordem de serviço
-  const handleCreateServiceOrder = async (data: any) => {
+  const handleCreateServiceOrder = async (newOrder: Omit<ServiceOrder, 'id'>) => {
     setLoading(true);
     
     try {
@@ -327,8 +322,8 @@ export const useServiceOrders = () => {
 
       // Ensure the priority is valid by checking against allowed values
       const validPriorities: PriorityType[] = ["Baixa", "Normal", "Alta", "Urgente"];
-      const priority: PriorityType = validPriorities.includes(data.priority as PriorityType) 
-        ? (data.priority as PriorityType) 
+      const priority: PriorityType = validPriorities.includes(newOrder.priority as PriorityType) 
+        ? (newOrder.priority as PriorityType) 
         : "Normal";
 
       // Inserir a ordem de serviço
@@ -336,29 +331,29 @@ export const useServiceOrders = () => {
         .from('service_orders')
         .insert({
           id: orderId,
-          customer_id: data.customerId,
-          bike_model: data.bikeModel,
-          issue_description: data.issueDescription,
+          customer_id: newOrder.customerId,
+          bike_model: newOrder.bikeModel,
+          issue_description: newOrder.issueDescription,
           status: "Aberta",
           priority: priority,
-          scheduled_for: data.scheduledFor,
-          technician_id: data.technicianId ? parseInt(data.technicianId) : null,
-          total_price: data.totalPrice,
-          notes: data.notes,
-          labor_value: data.laborValue || 0,
-          payment_method: data.paymentMethod as PaymentMethodType,
-          down_payment: data.downPayment,
-          installments: data.installments,
-          installment_amount: data.installmentAmount,
-          first_installment_date: data.firstInstallmentDate
+          scheduled_for: newOrder.scheduledFor,
+          technician_id: newOrder.technicianId ? parseInt(newOrder.technicianId) : null,
+          total_price: newOrder.totalPrice,
+          notes: newOrder.notes,
+          labor_value: newOrder.laborValue || 0,
+          payment_method: newOrder.paymentMethod as PaymentMethodType,
+          down_payment: newOrder.downPayment,
+          installments: newOrder.installments,
+          installment_amount: newOrder.installmentAmount,
+          first_installment_date: newOrder.firstInstallmentDate
         })
         .select();
 
       if (orderError) throw orderError;
 
       // Inserir os serviços
-      if (data.services && data.services.length > 0) {
-        const servicesToInsert = data.services.map((service: any) => ({
+      if (newOrder.services && newOrder.services.length > 0) {
+        const servicesToInsert = newOrder.services.map((service: any) => ({
           service_order_id: orderId,
           name: service.name,
           price: service.price
@@ -372,8 +367,8 @@ export const useServiceOrders = () => {
       }
 
       // Inserir os produtos e atualizar estoque
-      if (data.products && data.products.length > 0) {
-        const productsToInsert = data.products.map((product: any) => ({
+      if (newOrder.products && newOrder.products.length > 0) {
+        const productsToInsert = newOrder.products.map((product: any) => ({
           service_order_id: orderId,
           product_id: product.id,
           quantity: product.quantity,
@@ -388,37 +383,18 @@ export const useServiceOrders = () => {
         if (productsError) throw productsError;
 
         // Atualizar estoque dos produtos
-        for (const product of data.products) {
-          // Usando update diretamente em vez de rpc para decrement
-          const { error: updateError } = await supabase
-            .from('products')
-            .update({ 
-              stock: supabase.sql`stock - ${product.quantity}`
-            })
-            .eq('id', product.id);
+        if (productsToInsert.length > 0) {
+          for (const product of productsToInsert) {
+            // Utilizando rpc em vez de sql
+            const { error: updateError } = await supabase
+              .from('products')
+              .update({ stock: supabase.rpc('decrement_stock', { amount: product.quantity }) })
+              .eq('id', product.id);
 
-          if (updateError) {
-            console.error('Erro ao atualizar estoque:', updateError);
-            // Não interrompe o processo, apenas loga o erro
-          }
-
-          // Registrar movimento de estoque
-          const { error: movementError } = await supabase
-            .from('stock_movements')
-            .insert({
-              product_id: product.id,
-              quantity: -product.quantity,  // Negativo para indicar saída
-              date: new Date().toISOString().split('T')[0],
-              time: new Date().toTimeString().split(' ')[0],
-              type: 'saída',
-              reason: `Ordem de Serviço ${orderId}`,
-              user_id: 1,  // Usar ID do usuário logado quando implementado
-              document: orderId
-            });
-
-          if (movementError) {
-            console.error('Erro ao registrar movimento de estoque:', movementError);
-            // Não interrompe o processo, apenas loga o erro
+            if (updateError) {
+              console.error('Erro ao atualizar estoque:', updateError);
+              // Continua o processo
+            }
           }
         }
       }
@@ -426,25 +402,25 @@ export const useServiceOrders = () => {
       // Criar a ordem de serviço formatada
       const newOrder: ServiceOrder = {
         id: orderId,
-        customer: data.customer,
-        bikeModel: data.bikeModel,
-        issueDescription: data.issueDescription,
+        customer: newOrder.customer,
+        bikeModel: newOrder.bikeModel,
+        issueDescription: newOrder.issueDescription,
         status: "Aberta",
         priority,
         createdAt: new Date().toISOString().split('T')[0],
-        scheduledFor: data.scheduledFor,
+        scheduledFor: newOrder.scheduledFor,
         completedAt: null,
-        technician: data.technicianId ? technicianOptions.find(t => t.id === parseInt(data.technicianId))?.name || null : null,
-        services: data.services ? data.services.map((s: any) => ({ ...s, id: String(s.id) })) : [],
-        products: data.products,
-        totalPrice: data.totalPrice,
-        notes: data.notes,
-        laborValue: data.laborValue || 0,
-        paymentMethod: data.paymentMethod as PaymentMethodType,
-        downPayment: data.downPayment,
-        installments: data.installments,
-        installmentAmount: data.installmentAmount,
-        firstInstallmentDate: data.firstInstallmentDate,
+        technician: newOrder.technicianId ? technicianOptions.find(t => t.id === parseInt(newOrder.technicianId))?.name || null : null,
+        services: newOrder.services ? newOrder.services.map((s: any) => ({ ...s, id: String(s.id) })) : [],
+        products: newOrder.products,
+        totalPrice: newOrder.totalPrice,
+        notes: newOrder.notes,
+        laborValue: newOrder.laborValue || 0,
+        paymentMethod: newOrder.paymentMethod as PaymentMethodType,
+        downPayment: newOrder.downPayment,
+        installments: newOrder.installments,
+        installmentAmount: newOrder.installmentAmount,
+        firstInstallmentDate: newOrder.firstInstallmentDate,
       };
 
       setServiceOrders([...serviceOrders, newOrder]);

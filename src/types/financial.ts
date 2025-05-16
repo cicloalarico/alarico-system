@@ -1,4 +1,6 @@
 
+import { PaymentMethodType, TransactionStatusType } from "./common";
+
 export interface FinancialTransaction {
   id: string;
   date: string;
@@ -14,4 +16,12 @@ export interface FinancialTransaction {
 }
 
 export type TransactionType = "receita" | "despesa";
-export type TransactionStatusType = "pendente" | "pago" | "cancelado" | "atrasado";
+
+// Adicionando a interface CashFlow
+export interface CashFlow {
+  date: string;
+  initialBalance: number;
+  inflow: number;
+  outflow: number;
+  finalBalance: number;
+}

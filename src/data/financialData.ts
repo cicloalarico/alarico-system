@@ -1,5 +1,4 @@
-
-import { FinancialTransaction, CashFlow } from "@/types";
+import { FinancialTransaction, CashFlow } from "@/types/financial";
 
 // Dados de exemplo para transações financeiras
 export const financialTransactionsData: FinancialTransaction[] = [

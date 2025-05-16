@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -104,8 +103,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       category: data.category,
       amount: data.amount,
       type: data.type,
-      paymentMethod: data.paymentMethod as any,
-      status: data.status,
+      paymentMethod: data.paymentMethod as PaymentMethodType,
+      status: data.status as TransactionStatusType, // Garantindo que o tipo está correto
       dueDate: data.dueDate ? format(data.dueDate, "yyyy-MM-dd") : undefined,
       relatedId: data.relatedId || undefined,
       notes: data.notes || "",

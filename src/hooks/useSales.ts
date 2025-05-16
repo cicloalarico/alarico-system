@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { Sale, SaleCreate, SaleItem, SaleItemCreate, SaleStatusType } from '@/types';
@@ -122,12 +121,10 @@ export const useSales = () => {
 
       // Atualizar o estoque dos produtos
       for (const item of saleData.items) {
-        // Usando update diretamente em vez de rpc para decrement
+        // Utilizando o operador de subtração diretamente na query
         const { error: updateError } = await supabase
           .from('products')
-          .update({ 
-            stock: supabase.sql`stock - ${item.quantity}`
-          })
+          .update({ stock: supabase.rpc('decrement_stock', { amount: item.quantity }) })
           .eq('id', item.productId);
 
         if (updateError) {
@@ -225,12 +222,10 @@ export const useSales = () => {
 
       // Atualizar o estoque dos produtos (devolver ao estoque)
       for (const item of items) {
-        // Usando update diretamente em vez de rpc para increment
+        // Utilizando o operador de adição diretamente na query
         const { error: updateError } = await supabase
           .from('products')
-          .update({ 
-            stock: supabase.sql`stock + ${item.quantity}`
-          })
+          .update({ stock: supabase.rpc('increment_stock', { amount: item.quantity }) })
           .eq('id', item.product_id);
 
         if (updateError) {

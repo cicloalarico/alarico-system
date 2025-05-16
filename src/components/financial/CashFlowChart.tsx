@@ -1,4 +1,3 @@
-
 import React from "react";
 import {
   AreaChart,
@@ -13,7 +12,7 @@ import {
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CashFlow } from "@/types";
+import { CashFlow } from "@/types/financial";
 
 interface CashFlowChartProps {
   data: CashFlow[];
