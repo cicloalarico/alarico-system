@@ -21,7 +21,7 @@ import Services from "@/pages/Services";
 import "./App.css";
 
 function App() {
-  // Updated signature to match the expected return type
+  // Fixed signature to match the expected parameters
   const handleLogin = (email: string, password: string): void => {
     console.log("Login attempt with:", email, password);
     // Implement actual login logic here

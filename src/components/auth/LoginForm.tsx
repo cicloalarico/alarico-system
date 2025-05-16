@@ -24,7 +24,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 interface LoginFormProps {
-  onLogin: () => void;
+  onLogin: (email: string, password: string) => void;
 }
 
 const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
@@ -84,7 +84,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
         description: `Bem-vindo, ${userData.name}!`,
       });
       
-      onLogin();
+      onLogin(data.email, data.password);
     } catch (error: any) {
       toast({
         title: "Erro de autenticação",
