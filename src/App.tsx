@@ -21,10 +21,10 @@ import Services from "@/pages/Services";
 import "./App.css";
 
 function App() {
-  const handleLogin = (email: string, password: string) => {
+  // Updated signature to match the expected return type
+  const handleLogin = (email: string, password: string): void => {
     console.log("Login attempt with:", email, password);
     // Implement actual login logic here
-    return true;
   };
 
   return (

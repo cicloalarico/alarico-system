@@ -51,9 +51,9 @@ const ServiceOrders = () => {
     fetchServices();
   }, []);
 
-  // Convert products for the service order form
+  // Convert products for the service order form, ensuring IDs are strings
   const formattedProducts: FormProduct[] = products.map(product => ({
-    id: product.id,
+    id: product.id.toString(), // Convert id to string
     name: product.name,
     price: product.price || 0,
   }));

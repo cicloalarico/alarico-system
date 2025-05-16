@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useServices } from "@/hooks/useServices";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,84 +20,67 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Pencil, Trash2, Plus } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 const Services = () => {
-  const { services, loading, createService, updateService, deleteService } = useServices();
-  const { toast } = useToast();
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedService, setSelectedService] = useState<{ id: string; name: string; price: number } | null>(null);
+  const { 
+    services, 
+    isLoading, 
+    fetchServices, 
+    isAddDialogOpen, 
+    setIsAddDialogOpen,
+    isEditDialogOpen,
+    setIsEditDialogOpen,
+    selectedService,
+    handleCreateService,
+    handleUpdateService,
+    handleDeleteService,
+    handleViewService
+  } = useServices();
+
   const [formData, setFormData] = useState({
     name: "",
+    description: "",
     price: 0,
+    category: ""
   });
 
-  const handleCreateService = async () => {
-    if (!formData.name || formData.price <= 0) {
-      toast({
-        title: "Dados incompletos",
-        description: "Preencha todos os campos obrigatórios.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      await createService({
-        name: formData.name,
-        price: formData.price,
-      });
-      setFormData({ name: "", price: 0 });
-      setIsAddDialogOpen(false);
-    } catch (error) {
-      console.error("Error creating service:", error);
-    }
-  };
-
-  const handleUpdateService = async () => {
-    if (!selectedService || !formData.name || formData.price <= 0) {
-      toast({
-        title: "Dados incompletos",
-        description: "Preencha todos os campos obrigatórios.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      await updateService(selectedService.id, {
-        name: formData.name,
-        price: formData.price,
-      });
-      setIsEditDialogOpen(false);
-    } catch (error) {
-      console.error("Error updating service:", error);
-    }
-  };
-
-  const handleOpenEditDialog = (service: { id: string; name: string; price: number }) => {
-    setSelectedService(service);
-    setFormData({
-      name: service.name,
-      price: service.price,
-    });
-    setIsEditDialogOpen(true);
-  };
+  // Fetch services on component mount
+  useEffect(() => {
+    fetchServices();
+  }, []);
 
   const handleOpenAddDialog = () => {
-    setFormData({ name: "", price: 0 });
+    setFormData({ name: "", description: "", price: 0, category: "" });
     setIsAddDialogOpen(true);
   };
 
-  const handleDeleteService = async (id: string) => {
-    if (confirm("Tem certeza que deseja excluir este serviço?")) {
-      try {
-        await deleteService(id);
-      } catch (error) {
-        console.error("Error deleting service:", error);
-      }
+  const handleOpenEditDialog = (service: any) => {
+    setFormData({
+      name: service.name,
+      description: service.description || "",
+      price: service.price,
+      category: service.category || ""
+    });
+    handleViewService(service);
+  };
+
+  const handleSubmitCreate = () => {
+    if (!formData.name || formData.price <= 0) {
+      toast.error("Preencha todos os campos obrigatórios.");
+      return;
     }
+
+    handleCreateService(formData);
+  };
+
+  const handleSubmitUpdate = () => {
+    if (!selectedService || !formData.name || formData.price <= 0) {
+      toast.error("Preencha todos os campos obrigatórios.");
+      return;
+    }
+
+    handleUpdateService(selectedService.id, formData);
   };
 
   return (
@@ -109,7 +92,7 @@ const Services = () => {
         </Button>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <div className="text-center py-10">Carregando serviços...</div>
       ) : services.length === 0 ? (
         <div className="text-center py-10 bg-gray-50 rounded-md">
@@ -124,6 +107,8 @@ const Services = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Nome</TableHead>
+                <TableHead>Descrição</TableHead>
+                <TableHead>Categoria</TableHead>
                 <TableHead className="text-right">Preço (R$)</TableHead>
                 <TableHead className="w-[100px] text-right">Ações</TableHead>
               </TableRow>
@@ -132,6 +117,8 @@ const Services = () => {
               {services.map((service) => (
                 <TableRow key={service.id}>
                   <TableCell>{service.name}</TableCell>
+                  <TableCell className="max-w-xs truncate">{service.description}</TableCell>
+                  <TableCell>{service.category}</TableCell>
                   <TableCell className="text-right">{service.price.toFixed(2)}</TableCell>
                   <TableCell className="flex justify-end gap-1">
                     <Button
@@ -173,6 +160,22 @@ const Services = () => {
               />
             </div>
             <div className="space-y-2">
+              <Label htmlFor="description">Descrição</Label>
+              <Input
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="category">Categoria</Label>
+              <Input
+                id="category"
+                value={formData.category}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="price">Preço (R$)</Label>
               <Input
                 id="price"
@@ -188,7 +191,7 @@ const Services = () => {
             <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleCreateService}>Salvar</Button>
+            <Button onClick={handleSubmitCreate}>Salvar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -209,6 +212,22 @@ const Services = () => {
               />
             </div>
             <div className="space-y-2">
+              <Label htmlFor="edit-description">Descrição</Label>
+              <Input
+                id="edit-description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-category">Categoria</Label>
+              <Input
+                id="edit-category"
+                value={formData.category}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="edit-price">Preço (R$)</Label>
               <Input
                 id="edit-price"
@@ -224,7 +243,7 @@ const Services = () => {
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleUpdateService}>Atualizar</Button>
+            <Button onClick={handleSubmitUpdate}>Atualizar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

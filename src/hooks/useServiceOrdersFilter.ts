@@ -32,11 +32,16 @@ export const useServiceOrdersFilter = (serviceOrders: ServiceOrder[]) => {
     });
   }, [serviceOrders, searchTerm, activeTab]);
 
+  // Create a wrapper for setActiveTab that accepts string and converts it to the proper type
+  const handleSetActiveTab = (value: string) => {
+    setActiveTab(value as ServiceStatusType | "Todas");
+  };
+
   return {
     searchTerm,
     setSearchTerm,
     activeTab,
-    setActiveTab,
+    setActiveTab: handleSetActiveTab,
     filteredServiceOrders
   };
 };
