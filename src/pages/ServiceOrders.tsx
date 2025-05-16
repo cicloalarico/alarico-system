@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import ServiceOrderHeader from "@/components/service-orders/ServiceOrderHeader";
 import ServiceOrdersFilter from "@/components/service-orders/ServiceOrdersFilter";
 import ServiceOrdersList from "@/components/service-orders/ServiceOrdersList";
@@ -7,13 +7,10 @@ import ServiceOrderForm from "@/components/service-orders/ServiceOrderForm";
 import ServiceOrderDetails from "@/components/service-orders/ServiceOrderDetails";
 import { useServiceOrders } from "@/hooks/useServiceOrders";
 import { useServiceOrdersFilter } from "@/hooks/useServiceOrdersFilter";
-import { 
-  customerOptions,
-  serviceOptions,
-  productOptions,
-  technicianOptions,
-  priorityOptions
-} from "@/data/serviceOrdersData";
+import { priorityOptions } from "@/data/serviceOrdersData";
+import { useCustomers } from "@/hooks/useCustomers";
+import { useProducts } from "@/hooks/useProducts";
+import { useServices } from "@/hooks/useServices";
 
 const ServiceOrders = () => {
   const {
@@ -27,6 +24,17 @@ const ServiceOrders = () => {
     handleCreateServiceOrder,
     handleUpdateStatus
   } = useServiceOrders();
+
+  const { customers } = useCustomers();
+  const { products } = useProducts();
+  const { services } = useServices();
+  
+  // Get technicians from the database (in a real app)
+  const [technicianOptions, setTechnicianOptions] = useState([
+    { id: 1, name: "João Silva" },
+    { id: 2, name: "Maria Santos" },
+    { id: 3, name: "Carlos Oliveira" }
+  ]);
 
   const {
     searchTerm,
@@ -59,9 +67,9 @@ const ServiceOrders = () => {
         isOpen={isAddDialogOpen}
         onClose={() => setIsAddDialogOpen(false)}
         onSubmit={handleCreateServiceOrder}
-        customers={customerOptions}
-        serviceOptions={serviceOptions}
-        productOptions={productOptions}
+        customers={customers}
+        serviceOptions={services}
+        productOptions={products}
         technicianOptions={technicianOptions}
         priorityOptions={priorityOptions}
       />

@@ -1,150 +1,158 @@
 
-import { Link, useLocation } from "react-router-dom";
-
+import React from "react";
 import { cn } from "@/lib/utils";
+import { Link, useLocation } from "react-router-dom";
 import {
-  BarChart,
-  Users,
-  Package,
-  ShoppingCart,
-  Wrench,
+  BarChart2,
+  Calendar,
+  ClipboardList,
   CreditCard,
-  Receipt,
-  Calendar as CalendarIcon,
-  BarChart3,
-  Settings,
   FileText,
+  Home,
+  Package,
+  Settings,
+  ShoppingCart,
+  Tool,
+  Truck,
+  Users,
+  Wallet,
+  Wrench,
 } from "lucide-react";
-import { useIsMobile } from "@/hooks/use-mobile";
 
-const Sidebar = ({ expanded }: { expanded: boolean }) => {
-  const { pathname } = useLocation();
-  const isMobile = useIsMobile();
+const Sidebar = () => {
+  const location = useLocation();
+  const pathName = location.pathname;
 
-  // Define the navigation items
-  const navItems = [
+  const mainLinks = [
     {
-      title: "Dashboard",
+      name: "Dashboard",
       href: "/",
-      icon: BarChart,
+      icon: <Home className="mr-2 h-4 w-4" />,
     },
     {
-      title: "Clientes",
-      href: "/customers",
-      icon: Users,
-    },
-    {
-      title: "Produtos",
-      href: "/products",
-      icon: Package,
-    },
-    {
-      title: "Estoque",
-      href: "/inventory",
-      icon: ShoppingCart,
-    },
-    {
-      title: "Ordens de Serviço",
-      href: "/services",
-      icon: Wrench,
-    },
-    {
-      title: "Vendas",
-      href: "/sales",
-      icon: ShoppingCart,
-    },
-    {
-      title: "Financeiro",
-      href: "/financial",
-      icon: CreditCard,
-    },
-    {
-      title: "Contas a Pagar",
-      href: "/bills",
-      icon: Receipt,
-    },
-    {
-      title: "Agenda",
+      name: "Calendário",
       href: "/calendar",
-      icon: CalendarIcon,
+      icon: <Calendar className="mr-2 h-4 w-4" />,
     },
     {
-      title: "Relatórios",
+      name: "Clientes",
+      href: "/customers",
+      icon: <Users className="mr-2 h-4 w-4" />,
+    },
+    {
+      name: "Produtos",
+      href: "/products",
+      icon: <Package className="mr-2 h-4 w-4" />,
+    },
+    {
+      name: "Serviços",
+      href: "/services",
+      icon: <Tool className="mr-2 h-4 w-4" />,
+    },
+    {
+      name: "Ordens de Serviço",
+      href: "/service-orders",
+      icon: <Wrench className="mr-2 h-4 w-4" />,
+    },
+    {
+      name: "Vendas",
+      href: "/sales",
+      icon: <ShoppingCart className="mr-2 h-4 w-4" />,
+    },
+    {
+      name: "Estoque",
+      href: "/inventory",
+      icon: <Truck className="mr-2 h-4 w-4" />,
+    },
+    {
+      name: "Financeiro",
+      href: "/financial",
+      icon: <Wallet className="mr-2 h-4 w-4" />,
+    },
+    {
+      name: "Contas",
+      href: "/bills",
+      icon: <CreditCard className="mr-2 h-4 w-4" />,
+    },
+    {
+      name: "Relatórios",
       href: "/reports",
-      icon: BarChart3,
-    },
-    {
-      title: "Usuários",
-      href: "/users",
-      icon: Users,
-    },
-    {
-      title: "Configurações",
-      href: "/settings",
-      icon: Settings,
+      icon: <BarChart2 className="mr-2 h-4 w-4" />,
     },
   ];
 
-  if (isMobile) {
-    return null;
-  }
+  const secondaryLinks = [
+    {
+      name: "Usuários",
+      href: "/users",
+      icon: <Users className="mr-2 h-4 w-4" />,
+    },
+    {
+      name: "Configurações",
+      href: "/settings",
+      icon: <Settings className="mr-2 h-4 w-4" />,
+    },
+  ];
+
+  const NavLink = ({
+    href,
+    children,
+    className,
+  }: {
+    href: string;
+    children: React.ReactNode;
+    className?: string;
+  }) => {
+    const isActive = pathName === href;
+
+    return (
+      <Link
+        to={href}
+        className={cn(
+          "flex items-center rounded-lg px-3 py-2 text-sm transition-all hover:bg-gray-100 dark:hover:bg-gray-800",
+          isActive
+            ? "bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-50"
+            : "text-gray-500 dark:text-gray-400",
+          className
+        )}
+      >
+        {children}
+      </Link>
+    );
+  };
 
   return (
-    <div
-      className={cn(
-        "hidden md:flex flex-col border-r transition-all duration-300 bg-shop-primary text-white",
-        expanded ? "w-56" : "w-16"
-      )}
-    >
-      <div className="p-4 h-16 flex items-center border-b border-shop-dark">
-        <h1
-          className={cn(
-            "font-bold overflow-hidden transition-all duration-300 text-white",
-            expanded ? "w-56 opacity-100" : "w-0 opacity-0"
-          )}
-        >
-          Ciclo Alarico
-        </h1>
-        <img
-          src="/favicon.ico"
-          alt="Logo"
-          className={cn(
-            "h-8 w-8 transition-all duration-300",
-            expanded ? "opacity-0 w-0" : "opacity-100"
-          )}
-        />
+    <aside className="hidden lg:flex h-screen w-64 flex-col border-r bg-background">
+      <div className="flex h-14 items-center border-b px-4">
+        <Link to="/" className="flex items-center gap-2 font-semibold">
+          <ClipboardList className="h-6 w-6" />
+          <span className="text-lg">BikeMaster</span>
+        </Link>
       </div>
-
-      <div className="py-4 flex-1">
-        <nav className="px-2 space-y-1">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                to={item.href}
-                className={cn(
-                  "flex items-center py-2 px-3 rounded-lg text-sm font-medium hover:bg-shop-dark",
-                  isActive
-                    ? "bg-shop-dark text-white"
-                    : "text-white hover:text-white"
-                )}
-              >
-                <item.icon className={cn("h-5 w-5")} />
-                <span
-                  className={cn(
-                    "ml-3 whitespace-nowrap transition-all duration-300",
-                    expanded ? "opacity-100" : "w-0 opacity-0"
-                  )}
-                >
-                  {item.title}
-                </span>
-              </Link>
-            );
-          })}
-        </nav>
-      </div>
-    </div>
+      <nav className="flex-1 overflow-auto py-4">
+        <div className="px-4 space-y-1">
+          {mainLinks.map((link) => (
+            <NavLink key={link.name} href={link.href}>
+              {link.icon}
+              {link.name}
+            </NavLink>
+          ))}
+        </div>
+        <div className="mt-8">
+          <div className="px-4 text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+            Administração
+          </div>
+          <div className="px-4 space-y-1">
+            {secondaryLinks.map((link) => (
+              <NavLink key={link.name} href={link.href}>
+                {link.icon}
+                {link.name}
+              </NavLink>
+            ))}
+          </div>
+        </div>
+      </nav>
+    </aside>
   );
 };
 

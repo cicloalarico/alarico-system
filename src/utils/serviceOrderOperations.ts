@@ -26,10 +26,26 @@ export const createServiceOrder = async (
       ? orderData.priority 
       : "Normal";
 
-    // We need a variable to hold the new order before inserting
-    const customerId = typeof orderData.customer === 'object' && orderData.customer !== null 
-      ? (orderData.customer as any).id 
-      : parseInt(orderData.customer as unknown as string, 10);
+    // Parse customer ID correctly
+    let customerId: number;
+    if (typeof orderData.customer === 'object' && orderData.customer !== null) {
+      customerId = (orderData.customer as any).id;
+    } else if (typeof orderData.customer === 'string') {
+      // Try to find the customer by name
+      const { data: customerData, error: customerError } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('name', orderData.customer)
+        .single();
+      
+      if (customerError || !customerData) {
+        throw new Error(`Customer not found: ${orderData.customer}`);
+      }
+      
+      customerId = customerData.id;
+    } else {
+      throw new Error('Invalid customer data provided');
+    }
       
     const technicianId = orderData.technician 
       ? parseInt(orderData.technician.toString()) 
@@ -79,7 +95,7 @@ export const createServiceOrder = async (
     if (orderData.products && orderData.products.length > 0) {
       const productsToInsert = orderData.products.map((product: any) => ({
         service_order_id: orderId,
-        product_id: product.id,
+        product_id: parseInt(product.id),
         quantity: product.quantity,
         price: product.price,
         subtotal: product.subtotal
