@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
-import { Settings as SettingsIcon, User, Store, Bell, Lock } from "lucide-react";
+import { Settings as SettingsIcon, User, Store, Bell, Lock, Users } from "lucide-react";
+import UserProfilesTab from "@/components/settings/UserProfilesTab";
 
 const Settings = () => {
   const { toast } = useToast();
@@ -42,6 +43,10 @@ const Settings = () => {
           <TabsTrigger value="business">
             <Store className="mr-2 h-4 w-4" />
             Empresa
+          </TabsTrigger>
+          <TabsTrigger value="profiles">
+            <Users className="mr-2 h-4 w-4" />
+            Perfis de Acesso
           </TabsTrigger>
           <TabsTrigger value="notifications">
             <Bell className="mr-2 h-4 w-4" />
@@ -186,6 +191,10 @@ const Settings = () => {
               <Button onClick={() => saveSettings('empresa')}>Salvar Informações</Button>
             </CardFooter>
           </Card>
+        </TabsContent>
+        
+        <TabsContent value="profiles">
+          <UserProfilesTab />
         </TabsContent>
         
         <TabsContent value="notifications">

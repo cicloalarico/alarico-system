@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +11,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { User } from "@/types";
+import { User, UserProfile } from "@/types";
+import { useUserProfiles } from "@/hooks/useUserProfiles";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface UserFormProps {
   user: Partial<User>;
@@ -20,20 +22,46 @@ interface UserFormProps {
   isEditing: boolean;
 }
 
-const UserForm: React.FC<UserFormProps> = ({ 
-  user, 
-  onChange, 
-  onSubmit, 
-  isEditing 
+const UserForm: React.FC<UserFormProps> = ({
+  user,
+  onChange,
+  onSubmit,
+  isEditing,
 }) => {
+  const { profiles, loading: loadingProfiles, fetchProfiles } = useUserProfiles();
+  const [loadingForm, setLoadingForm] = useState(true);
+
+  useEffect(() => {
+    const initializeForm = async () => {
+      await fetchProfiles();
+      setLoadingForm(false);
+    };
+    
+    initializeForm();
+  }, []);
+
+  if (loadingForm || loadingProfiles) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+      </div>
+    );
+  }
+
   return (
-    <form onSubmit={(e) => {
-      e.preventDefault();
-      onSubmit();
-    }} className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSubmit();
+      }}
+      className="space-y-4"
+    >
+      <div className="grid grid-cols-1 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="name">Nome completo *</Label>
+          <Label htmlFor="name">Nome *</Label>
           <Input
             id="name"
             value={user.name || ""}
@@ -41,6 +69,7 @@ const UserForm: React.FC<UserFormProps> = ({
             required
           />
         </div>
+
         <div className="space-y-2">
           <Label htmlFor="email">Email *</Label>
           <Input
@@ -51,76 +80,95 @@ const UserForm: React.FC<UserFormProps> = ({
             required
           />
         </div>
-      </div>
 
-      {!isEditing && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="password">Senha *</Label>
-            <Input
-              id="password"
-              type="password"
-              value={user.password || ""}
-              onChange={(e) => onChange("password", e.target.value)}
-              required={!isEditing}
-              autoComplete="new-password"
-            />
+            <Label htmlFor="role">Cargo *</Label>
+            <Select
+              value={user.role}
+              onValueChange={(value) => onChange("role", value)}
+            >
+              <SelectTrigger id="role">
+                <SelectValue placeholder="Selecione um cargo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="admin">Administrador</SelectItem>
+                <SelectItem value="mechanic">Mecânico</SelectItem>
+                <SelectItem value="seller">Vendedor</SelectItem>
+                <SelectItem value="user">Usuário</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
+
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirmar senha *</Label>
+            <Label htmlFor="department">Departamento</Label>
             <Input
-              id="confirmPassword"
-              type="password"
-              value={user.confirmPassword || ""}
-              onChange={(e) => onChange("confirmPassword", e.target.value)}
-              required={!isEditing}
-              autoComplete="new-password"
+              id="department"
+              value={user.department || ""}
+              onChange={(e) => onChange("department", e.target.value)}
             />
           </div>
         </div>
-      )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="role">Perfil *</Label>
+          <Label htmlFor="profileId">Perfil de Acesso</Label>
           <Select
-            value={user.role || "user"}
-            onValueChange={(value) => onChange("role", value)}
+            value={user.profileId ? String(user.profileId) : undefined}
+            onValueChange={(value) => onChange("profileId", value ? parseInt(value) : null)}
           >
-            <SelectTrigger id="role">
-              <SelectValue placeholder="Selecione o perfil" />
+            <SelectTrigger id="profileId">
+              <SelectValue placeholder="Selecione um perfil" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="admin">Administrador</SelectItem>
-              <SelectItem value="tech">Técnico</SelectItem>
-              <SelectItem value="seller">Vendedor</SelectItem>
-              <SelectItem value="user">Usuário padrão</SelectItem>
+              <SelectItem value="">Nenhum</SelectItem>
+              {profiles.map(profile => (
+                <SelectItem key={profile.id} value={String(profile.id)}>
+                  {profile.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="department">Departamento</Label>
+          <Label htmlFor="password">{isEditing ? "Nova Senha" : "Senha *"}</Label>
           <Input
-            id="department"
-            value={user.department || ""}
-            onChange={(e) => onChange("department", e.target.value)}
+            id="password"
+            type="password"
+            value={user.password || ""}
+            onChange={(e) => onChange("password", e.target.value)}
+            required={!isEditing}
           />
+        </div>
+
+        {(isEditing ? !!user.password : true) && (
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword">
+              {isEditing ? "Confirmar Nova Senha" : "Confirmar Senha *"}
+            </Label>
+            <Input
+              id="confirmPassword"
+              type="password"
+              value={user.confirmPassword || ""}
+              onChange={(e) => onChange("confirmPassword", e.target.value)}
+              required={isEditing ? !!user.password : true}
+            />
+          </div>
+        )}
+
+        <div className="flex items-center space-x-2 pt-2">
+          <Switch
+            id="isActive"
+            checked={user.isActive !== false}
+            onCheckedChange={(checked) => onChange("isActive", checked)}
+          />
+          <Label htmlFor="isActive">Usuário Ativo</Label>
         </div>
       </div>
 
-      <div className="flex items-center space-x-2">
-        <Switch
-          id="isActive"
-          checked={user.isActive !== false}
-          onCheckedChange={(checked) => onChange("isActive", checked)}
-        />
-        <Label htmlFor="isActive">Usuário ativo</Label>
-      </div>
-
-      <div className="flex justify-end space-x-2 pt-4">
+      <div className="flex justify-end pt-4">
         <Button type="submit">
-          {isEditing ? "Atualizar usuário" : "Criar usuário"}
+          {isEditing ? "Atualizar Usuário" : "Criar Usuário"}
         </Button>
       </div>
     </form>

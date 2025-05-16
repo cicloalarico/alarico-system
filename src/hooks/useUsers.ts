@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { User } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -33,6 +33,7 @@ export const useUsers = () => {
           password: '', // Não incluímos a senha real nos dados do cliente
           department: user.department || undefined,
           isActive: user.is_active,
+          profileId: user.profile_id || undefined,
           lastLogin: user.last_login ? format(new Date(user.last_login), 'yyyy-MM-dd HH:mm') : '',
           createdAt: user.created_at ? format(new Date(user.created_at), 'yyyy-MM-dd HH:mm') : ''
         }));
@@ -64,6 +65,7 @@ export const useUsers = () => {
         password: userData.password, // Em produção, seria necessário implementar hash de senha
         role: userData.role as any,
         department: userData.department || null,
+        profile_id: userData.profileId || null,
         is_active: userData.isActive !== false,
       }).select();
 
@@ -77,6 +79,7 @@ export const useUsers = () => {
           role: data[0].role,
           password: '',
           department: data[0].department || undefined,
+          profileId: data[0].profile_id || undefined,
           isActive: data[0].is_active,
           lastLogin: data[0].last_login ? format(new Date(data[0].last_login), 'yyyy-MM-dd HH:mm') : '',
           createdAt: data[0].created_at ? format(new Date(data[0].created_at), 'yyyy-MM-dd HH:mm') : ''
@@ -110,6 +113,7 @@ export const useUsers = () => {
         email: userData.email,
         role: userData.role,
         department: userData.department || null,
+        profile_id: userData.profileId || null,
         is_active: userData.isActive
       };
 
@@ -134,6 +138,7 @@ export const useUsers = () => {
           role: data[0].role,
           password: '',
           department: data[0].department || undefined,
+          profileId: data[0].profile_id || undefined,
           isActive: data[0].is_active,
           lastLogin: data[0].last_login ? format(new Date(data[0].last_login), 'yyyy-MM-dd HH:mm') : '',
           createdAt: data[0].created_at ? format(new Date(data[0].created_at), 'yyyy-MM-dd HH:mm') : ''

@@ -299,6 +299,41 @@ export type Database = {
         }
         Relationships: []
       }
+      page_permissions: {
+        Row: {
+          can_edit: boolean | null
+          can_view: boolean | null
+          created_at: string | null
+          id: number
+          page_name: string
+          profile_id: number | null
+        }
+        Insert: {
+          can_edit?: boolean | null
+          can_view?: boolean | null
+          created_at?: string | null
+          id?: number
+          page_name: string
+          profile_id?: number | null
+        }
+        Update: {
+          can_edit?: boolean | null
+          can_view?: boolean | null
+          created_at?: string | null
+          id?: number
+          page_name?: string
+          profile_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_permissions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_installments: {
         Row: {
           amount: number
@@ -680,6 +715,27 @@ export type Database = {
           },
         ]
       }
+      user_profiles: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: number
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: number
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: number
+          name?: string
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           created_at: string | null
@@ -690,6 +746,7 @@ export type Database = {
           last_login: string | null
           name: string
           password: string
+          profile_id: number | null
           role: Database["public"]["Enums"]["user_role"]
         }
         Insert: {
@@ -701,6 +758,7 @@ export type Database = {
           last_login?: string | null
           name: string
           password: string
+          profile_id?: number | null
           role?: Database["public"]["Enums"]["user_role"]
         }
         Update: {
@@ -712,9 +770,18 @@ export type Database = {
           last_login?: string | null
           name?: string
           password?: string
+          profile_id?: number | null
           role?: Database["public"]["Enums"]["user_role"]
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "users_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
