@@ -2,6 +2,7 @@
 // Re-export all types from domain-specific files
 export * from './serviceOrders';
 export * from './customers';
+export * from './suppliers';
 export * from './users';
 export * from './products';
 export * from './common';

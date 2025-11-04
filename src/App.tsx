@@ -24,6 +24,7 @@ import Inventory from "./pages/Inventory";
 import Sales from "./pages/Sales";
 import Calendar from "./pages/Calendar";
 import Bills from "./pages/Bills";
+import Suppliers from "./pages/Suppliers";
 
 const queryClient = new QueryClient();
 
@@ -94,6 +95,7 @@ const App = () => {
                 <Route path="/services" element={<ServiceOrders />} />
                 <Route path="/financial" element={<Financial />} />
                 <Route path="/bills" element={<Bills />} />
+                <Route path="/suppliers" element={<Suppliers />} />
                 <Route path="/reports" element={<Reports />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/calendar" element={<Calendar />} />

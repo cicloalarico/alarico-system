@@ -14,6 +14,7 @@ import {
   BarChart3,
   Settings,
   FileText,
+  Truck,
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -32,6 +33,11 @@ const Sidebar = ({ expanded }: { expanded: boolean }) => {
       title: "Clientes",
       href: "/customers",
       icon: Users,
+    },
+    {
+      title: "Fornecedores",
+      href: "/suppliers",
+      icon: Truck,
     },
     {
       title: "Produtos",

@@ -7,8 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Bill, EmployeeSalary, EmployeeAdvance, BillStatusType } from "@/types";
-import { billsData, employeeSalariesData, suppliersData } from "@/data/billsData";
+import { billsData, employeeSalariesData } from "@/data/billsData";
 import { toast } from "@/hooks/use-toast";
+import { useSuppliers } from "@/hooks/useSuppliers";
 
 import BillsList from "@/components/bills/BillsList";
 import BillForm from "@/components/bills/BillForm";
@@ -36,6 +37,9 @@ const employeesData = [
 ];
 
 const Bills: React.FC = () => {
+  // Hook para fornecedores
+  const { suppliers } = useSuppliers();
+  
   // Estados para armazenar as contas a pagar e salários de funcionários
   const [bills, setBills] = useState<Bill[]>(billsData);
   const [employeeSalaries, setEmployeeSalaries] = useState<EmployeeSalary[]>(employeeSalariesData);
@@ -494,8 +498,8 @@ const Bills: React.FC = () => {
         isOpen={isAddBillOpen}
         onClose={() => setIsAddBillOpen(false)}
         onSubmit={handleAddBill}
-        suppliers={suppliersData}
-        employees={employeesData} // Add employees data here
+        suppliers={suppliers.map(s => ({ id: s.id, name: s.name }))}
+        employees={employeesData}
       />
 
       {/* Modal de Adicionar Novo Salário */}
@@ -511,8 +515,8 @@ const Bills: React.FC = () => {
         onClose={() => setIsEditBillOpen(false)}
         onSubmit={handleEditBill}
         initialData={selectedBill}
-        suppliers={suppliersData}
-        employees={employeesData} // Add employees data here
+        suppliers={suppliers.map(s => ({ id: s.id, name: s.name }))}
+        employees={employeesData}
       />
       
       {/* Modal de Editar Salário */}
